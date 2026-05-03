@@ -9,6 +9,8 @@ object BuildConfig {
 
     // https://semver.org/
     var MOD_VERSION: String = "0.1.0"
+
+    var CONFIG_VERSION: String = "3.7.3"
 }
 
 plugins {
@@ -17,10 +19,10 @@ plugins {
 }
 
 base {
-    archivesName = "template"
+    archivesName = "blockhider"
 }
 
-group = "dev.erudites.mods.template"
+group = "kr.pyke"
 version = createVersionString()
 
 repositories {
@@ -35,6 +37,11 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    implementation("com.electronwill.night-config:toml:${BuildConfig.CONFIG_VERSION}")
+    include("com.electronwill.night-config:toml:${BuildConfig.CONFIG_VERSION}")
+    implementation("com.electronwill.night-config:core:${BuildConfig.CONFIG_VERSION}")
+    include("com.electronwill.night-config:core:${BuildConfig.CONFIG_VERSION}")
 }
 
 tasks {

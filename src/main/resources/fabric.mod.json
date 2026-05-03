@@ -1,24 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "template",
+  "id": "blockhider",
   "version": "${version}",
-  "name": "Template",
-  "description": "description",
-  "authors": [
-    "Erudites"
-  ],
-  "license": "All rights reserved",
-  "environment": "client",
+  "name": "BlockHider",
+  "description": "",
+  "authors": [ "Pyke__Lee" ],
+  "license": "LGPL 3.0",
+  "environment": "*",
   "entrypoints": {
-    "client": [
-      "dev.erudites.mods.template.client.TemplateClientMod"
-    ],
-    "main": [
-      "dev.erudites.mods.template.TemplateMod"
-    ]
+    "main": [ "kr.pyke.blockhider.BlockHider" ],
+    "client": [ "kr.pyke.blockhider.client.BlockHiderClient" ]
   },
   "mixins": [
-    "template.mixins.json"
+    "blockhider.mixins.json"
   ],
   "depends": {
     "java": ">=25",

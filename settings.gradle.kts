@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = "fabric-mod-template"
+rootProject.name = "blockhider"

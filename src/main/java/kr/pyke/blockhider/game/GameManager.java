@@ -1,0 +1,163 @@
+package kr.pyke.blockhider.game;
+
+import kr.pyke.blockhider.config.ModConfig;
+import kr.pyke.blockhider.data.BlockHiderSavedData;
+import kr.pyke.blockhider.network.ModPackets;
+import kr.pyke.blockhider.transform.PlayerTransform;
+import kr.pyke.blockhider.transform.TransformableBlocks;
+import kr.pyke.blockhider.type.GAME_ROLE;
+import kr.pyke.blockhider.type.GAME_STATE;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.portal.TeleportTransition;
+
+import java.util.*;
+
+public class GameManager {
+    private static final GameManager INSTANCE = new GameManager();
+    private static final double BLOCK_CENTER_OFFSET = 0.5d;
+
+    private final GameData data = new GameData();
+    private final Random random = new Random();
+
+    private GameManager() { }
+
+    public static GameManager getInstance() { return INSTANCE; }
+
+    public GameData getData() { return this.data; }
+
+    public boolean isRunning() { return data.getState() != GAME_STATE.WAITING; }
+
+    public boolean start(MinecraftServer server, List<UUID> manualSeekers) {
+        if (isRunning()) { return false; }
+
+        BlockHiderSavedData savedData = BlockHiderSavedData.get(server);
+        List<ServerPlayer> participants = collectParticipants(server, savedData);
+        if (participants.size() < 2) { return false; }
+
+        int seekerCount = manualSeekers.isEmpty() ? ModConfig.getSeekerCount() : manualSeekers.size();
+        if (participants.size() <= seekerCount) { return false; }
+
+        data.clearPlayers();
+        assignRoles(participants, manualSeekers, seekerCount);
+        data.setState(GAME_STATE.PREPARING);
+
+        return true;
+    }
+
+    public void stop(MinecraftServer server) {
+        if (!isRunning()) { return; }
+
+        BlockHiderSavedData savedData = BlockHiderSavedData.get(server);
+        for (PlayerGameData playerGameData : data.getPlayers()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
+            if (player == null) { continue; }
+            cleanUpPlayer(player, playerGameData);
+            teleportToSpawn(player, savedData);
+        }
+
+        data.clearPlayers();
+        data.setState(GAME_STATE.WAITING);
+
+        ModPackets.broadcastClearAll(server);
+        server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r 게임이 종료되었습니다."), false);
+    }
+
+    public void tickPlayer(ServerPlayer player) {
+        if (data.getState() != GAME_STATE.RUNNING) { return; }
+
+        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
+
+        PlayerTransform transform = (PlayerTransform) player;
+        BlockState current = transform.blockhider$getTransformedBlock();
+
+        if (!player.isCrouching()) {
+            if (current != null) {
+                transform.blockhider$setTransformedBlock(current);
+                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+            }
+
+            return;
+        }
+
+        ServerLevel level = player.level();
+        BlockPos belowPos = player.blockPosition().below();
+        BlockState belowState = level.getBlockState(belowPos);
+
+        if (!TransformableBlocks.isTransformable(level, belowPos, belowState)) {
+            if (current != null) {
+                transform.blockhider$setTransformedBlock(null);
+                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+            }
+
+            return;
+        }
+
+        if (current == null) {
+            transform.blockhider$setTransformedBlock(belowState);
+            double centerX = belowPos.getX() + BLOCK_CENTER_OFFSET;
+            double centerZ = belowPos.getZ() + BLOCK_CENTER_OFFSET;
+            player.snapTo(centerX, player.getY(), centerZ, player.getYRot(), player.getXRot());
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState);
+        }
+        else if (current != belowState) {
+            transform.blockhider$setTransformedBlock(belowState);
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState);
+        }
+    }
+
+    private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {
+        player.getInventory().clearContent();
+        if (playerGameData.getRole() == GAME_ROLE.SPECTATOR) {
+            player.setGameMode(GameType.SURVIVAL);
+        }
+
+        PlayerTransform transform = (PlayerTransform)player;
+        if (transform.blockhider$getTransformedBlock() != null) {
+            transform.blockhider$setTransformedBlock(null);
+        }
+    }
+
+    private void teleportToSpawn(ServerPlayer player, BlockHiderSavedData savedData) {
+        TeleportTransition transition = savedData.createSpawnTransition(player.level().getServer(), TeleportTransition.DO_NOTHING);
+        if (transition == null) { return; }
+
+        player.teleport(transition);
+    }
+
+    private List<ServerPlayer> collectParticipants(MinecraftServer server, BlockHiderSavedData savedData) {
+        List<ServerPlayer> result = new ArrayList<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!savedData.isAdmin(player.getUUID())) {
+                result.add(player);
+            }
+        }
+
+        return result;
+    }
+
+    private void assignRoles(List<ServerPlayer> participants, List<UUID> manualSeekers, int seekerCount) {
+        if (manualSeekers.isEmpty()) {
+            List<ServerPlayer> shuffled = new ArrayList<>(participants);
+            Collections.shuffle(shuffled, random);
+            for (int i = 0; i < shuffled.size(); i++) {
+                ServerPlayer player = shuffled.get(i);
+                GAME_ROLE role = i < seekerCount ? GAME_ROLE.SEEKER : GAME_ROLE.HIDER;
+                data.addPlayer(new PlayerGameData(player.getUUID(), role));
+            }
+        }
+        else {
+            for (ServerPlayer player : participants) {
+                UUID uuid = player.getUUID();
+                GAME_ROLE role = manualSeekers.contains(uuid) ? GAME_ROLE.SEEKER : GAME_ROLE.HIDER;
+                data.addPlayer(new PlayerGameData(uuid, role));
+            }
+        }
+    }
+}

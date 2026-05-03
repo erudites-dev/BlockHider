@@ -1,10 +1,10 @@
-package dev.erudites.mods.template.client;
+package kr.pyke.blockhider.client;
 
 import net.fabricmc.api.ClientModInitializer;
 
-public class TemplateClientMod implements ClientModInitializer {
-
+public class BlockHiderClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+
     }
 }
