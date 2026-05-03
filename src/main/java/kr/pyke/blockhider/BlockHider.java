@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BlockHider implements ModInitializer {
-    public static final String MOD_ID = "assets/lang/blockhider";
+    public static final String MOD_ID = "blockhider";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static MinecraftServer SERVER_INSTANCE;
 

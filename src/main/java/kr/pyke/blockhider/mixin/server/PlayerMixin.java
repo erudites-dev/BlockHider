@@ -5,8 +5,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 
 @Mixin(Player.class)
 public abstract class PlayerMixin implements PlayerTransform {
@@ -21,6 +19,4 @@ public abstract class PlayerMixin implements PlayerTransform {
         this.blockhider$transformedBlock = blockState;
         ((Player) (Object) this).refreshDimensions();
     }
-
-    @Inject(method = "")
 }
