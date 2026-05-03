@@ -2,6 +2,7 @@ package kr.pyke.blockhider.client;
 
 import kr.pyke.blockhider.BlockHider;
 import kr.pyke.blockhider.client.model.HintItemModel;
+import kr.pyke.blockhider.network.ModPackets;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
@@ -18,5 +19,7 @@ public class BlockHiderClient implements ClientModInitializer {
                 return model;
             });
         });
+
+        ModPackets.registerClient();
     }
 }

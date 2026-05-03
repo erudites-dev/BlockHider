@@ -10,6 +10,9 @@
     "server.ServerPlayerMixin"
   ],
   "client": [
+    "client.AvatarRendererMixin",
+    "client.AvatarRenderStateMixin",
+    "client.EntityRenderDispatcherMixin"
   ],
   "injectors": {
     "defaultRequire": 1

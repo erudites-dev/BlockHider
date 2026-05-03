@@ -79,7 +79,7 @@ public class GameManager {
 
         if (!player.isCrouching()) {
             if (current != null) {
-                transform.blockhider$setTransformedBlock(current);
+                transform.blockhider$setTransformedBlock(null);
                 ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
             }
 
