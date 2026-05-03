@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "template",
+  "version": "${version}",
+  "name": "Template",
+  "description": "description",
+  "authors": [
+    "Erudites"
+  ],
+  "license": "All rights reserved",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.erudites.mods.template.client.TemplateClientMod"
+    ],
+    "main": [
+      "dev.erudites.mods.template.TemplateMod"
+    ]
+  },
+  "mixins": [
+    "template.mixins.json"
+  ],
+  "depends": {
+    "java": ">=25",
+    "fabricloader": ">=${fabric_loader_version}",
+    "fabric-api": ">=${fabric_api_version}",
+    "minecraft": ">=${minecraft_version}"
+  }
+}
