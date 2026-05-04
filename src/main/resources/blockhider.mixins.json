@@ -5,6 +5,7 @@
     "compatibilityLevel": "JAVA_25",
     "mixins": [
         "server.EntityMixin",
+        "server.FlowingFluidMixin",
         "server.LivingEntityMixin",
         "server.PlayerMixin",
         "server.ServerPlayerMixin",
