@@ -2,6 +2,7 @@ package kr.pyke.blockhider.game;
 
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
+import kr.pyke.blockhider.effect.HintEffect;
 import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.transform.PlayerTransform;
 import kr.pyke.blockhider.transform.TransformableBlocks;
@@ -23,11 +24,14 @@ public class GameManager {
     private static final double BLOCK_CENTER_OFFSET = 0.5d;
 
     private final GameData data = new GameData();
+    private final GameTimer timer = new GameTimer(this);
     private final Random random = new Random();
 
     private GameManager() { }
 
     public static GameManager getInstance() { return INSTANCE; }
+
+    public GameTimer getTimer() { return this.timer; }
 
     public GameData getData() { return this.data; }
 
@@ -47,11 +51,15 @@ public class GameManager {
         assignRoles(participants, manualSeekers, seekerCount);
         data.setState(GAME_STATE.PREPARING);
 
+        this.timer.startPreparation(server);
+
         return true;
     }
 
     public void stop(MinecraftServer server) {
         if (!isRunning()) { return; }
+
+        this.timer.stop();
 
         BlockHiderSavedData savedData = BlockHiderSavedData.get(server);
         for (PlayerGameData playerGameData : data.getPlayers()) {
@@ -159,5 +167,58 @@ public class GameManager {
                 data.addPlayer(new PlayerGameData(uuid, role));
             }
         }
+    }
+
+    public boolean handleHiderDeath(ServerPlayer player) {
+        if (data.getState() != GAME_STATE.RUNNING) { return true; }
+
+        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return true; }
+
+        eliminate(player, playerGameData);
+        checkVictory(player.level().getServer());
+        return false;
+    }
+
+    public boolean tryUseHint(ServerPlayer player) {
+        if (data.getState() != GAME_STATE.RUNNING) { return false; }
+
+        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+        if (playerGameData == null || playerGameData.getRole() != GAME_ROLE.SEEKER || !playerGameData.isAlive()) { return false; }
+
+        ServerLevel level = player.level();
+        for (PlayerGameData target : data.getPlayers()) {
+            if (target.getRole() != GAME_ROLE.HIDER || !target.isAlive()) { continue; }
+
+            ServerPlayer hider = level.getServer().getPlayerList().getPlayer(target.getUUID());
+            if (hider == null || hider.level() != level) { continue; }
+
+            HintEffect.spawn(level, hider.getX(), hider.getY(), hider.getZ());
+        }
+
+        return true;
+    }
+
+    private void eliminate(ServerPlayer player, PlayerGameData playerGameData) {
+        playerGameData.setAlive(false);
+        playerGameData.setRole(GAME_ROLE.SPECTATOR);
+
+        PlayerTransform transform = (PlayerTransform) player;
+        if (transform.blockhider$getTransformedBlock() != null) {
+            transform.blockhider$setTransformedBlock(null);
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+        }
+
+        player.setHealth(player.getMaxHealth());
+        player.setGameMode(GameType.SPECTATOR);
+        player.getInventory().clearContent();
+    }
+
+    private void checkVictory(MinecraftServer server) {
+        for (PlayerGameData playerGameData : data.getPlayers()) {
+            if (playerGameData.getRole() == GAME_ROLE.HIDER && playerGameData.isAlive()) { return; }
+        }
+
+        stop(server);
     }
 }
