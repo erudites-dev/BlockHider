@@ -127,7 +127,7 @@ public class GameManager {
     private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {
         player.getInventory().clearContent();
         if (playerGameData.getRole() == GAME_ROLE.SPECTATOR) {
-            player.setGameMode(GameType.SURVIVAL);
+            player.setGameMode(GameType.ADVENTURE);
         }
 
         PlayerTransform transform = (PlayerTransform)player;
@@ -136,7 +136,7 @@ public class GameManager {
         }
     }
 
-    private void teleportToSpawn(ServerPlayer player, BlockHiderSavedData savedData) {
+    public void teleportToSpawn(ServerPlayer player, BlockHiderSavedData savedData) {
         TeleportTransition transition = savedData.createSpawnTransition(player.level().getServer(), TeleportTransition.DO_NOTHING);
         if (transition == null) { return; }
 

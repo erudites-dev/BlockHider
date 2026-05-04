@@ -3,11 +3,13 @@ package kr.pyke.blockhider.client;
 import kr.pyke.blockhider.BlockHider;
 import kr.pyke.blockhider.client.hud.BlockHiderHud;
 import kr.pyke.blockhider.client.model.HintItemModel;
+import kr.pyke.blockhider.client.renderer.TransformedOutlineRenderer;
 import kr.pyke.blockhider.network.ModPackets;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelModifier;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.resources.Identifier;
 
 public class BlockHiderClient implements ClientModInitializer {
@@ -23,6 +25,8 @@ public class BlockHiderClient implements ClientModInitializer {
         });
 
         ModPackets.registerClient();
+
+        LevelRenderEvents.AFTER_TRANSLUCENT_FEATURES.register(TransformedOutlineRenderer::render);
 
         HudElementRegistry.addLast(BlockHider.id("game_state"), new BlockHiderHud());
     }

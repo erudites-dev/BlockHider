@@ -2,6 +2,7 @@ package kr.pyke.blockhider.game;
 
 import kr.pyke.blockhider.config.ConfigParsers;
 import kr.pyke.blockhider.config.ModConfig;
+import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.registry.item.ModItems;
 import kr.pyke.blockhider.type.GAME_ROLE;
@@ -19,6 +20,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 
 import java.util.List;
 
@@ -131,6 +133,8 @@ public class GameTimer {
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
 
+            GameManager.getInstance().teleportToSpawn(player, BlockHiderSavedData.get(server));
+            player.setGameMode(GameType.ADVENTURE);
             if (playerGameData.getRole() == GAME_ROLE.HIDER) {
                 this.giveHiderItems(player);
             }
@@ -157,18 +161,6 @@ public class GameTimer {
         }
 
         this.applyInitialPhase(server);
-    }
-
-    private void equipForPreparation(ServerPlayer player, PlayerGameData playerGameData) {
-        if (playerGameData.getRole() == GAME_ROLE.HIDER) {
-            this.giveItems(player, ModConfig.getHiderItems());
-            return;
-        }
-
-        if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
-            int durationTicks = ModConfig.getPreparationTimeSeconds() * TICKS_PER_SECOND;
-            player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, DEFAULT_BUFF_AMPLIFIER, false, false, true));
-        }
     }
 
     private void giveSeekerItems(ServerPlayer player) {

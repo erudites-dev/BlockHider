@@ -14,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererMixin {
+    private static final int GLOW_OUTLINE_COLOR = 0xFFFFFFFF;
+
     @Inject(method = "extractRenderState*", at = @At("RETURN"))
     private void blockhider$extractRenderState(Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
         PlayerTransform transform = (PlayerTransform) entity;
@@ -21,6 +23,12 @@ public abstract class AvatarRendererMixin {
         transformed.blockhider$setTransformedBlock(transform.blockhider$getTransformedBlock(), transform.blockhider$getTransformedPos());
 
         LocalPlayer localPlayer = Minecraft.getInstance().player;
-        transformed.blockhider$setLocalPlayer(localPlayer != null && entity == localPlayer);
+        boolean isLocal = localPlayer != null && entity == localPlayer;
+        transformed.blockhider$setLocalPlayer(isLocal);
+
+        if (isLocal && transform.blockhider$getTransformedBlock() != null) {
+            state.outlineColor = GLOW_OUTLINE_COLOR;
+            state.isInvisible = true;
+        }
     }
 }

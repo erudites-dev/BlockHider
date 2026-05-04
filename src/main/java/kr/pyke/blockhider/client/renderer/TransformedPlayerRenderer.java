@@ -11,18 +11,18 @@ import net.minecraft.world.level.block.state.BlockState;
 public class TransformedPlayerRenderer {
     private TransformedPlayerRenderer() { }
 
-    public static void submitBlock(BlockState block, BlockPos blockPos, double x, double y, double z, PoseStack poseStack, SubmitNodeCollector output) {
+    public static void submitBlock(BlockState block, BlockPos blockPos, double x, double y, double z, boolean isLocalPlayer, PoseStack poseStack, SubmitNodeCollector output) {
         ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) { return; }
+
+        BlockPos visualPos = blockPos.above();
 
         MovingBlockRenderState renderState = new MovingBlockRenderState();
         renderState.blockState = block;
-        renderState.blockPos = blockPos;
+        renderState.blockPos = visualPos;
         renderState.randomSeedPos = blockPos;
-
-        if (level != null) {
-            renderState.lightEngine = level.getLightEngine();
-            renderState.biome = level.getBiome(blockPos);
-        }
+        renderState.lightEngine = level.getLightEngine();
+        renderState.biome = level.getBiome(visualPos);
 
         poseStack.pushPose();
         poseStack.translate(x, y + 1, z);
