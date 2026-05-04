@@ -11,7 +11,7 @@ public class ServerLivingEntityHandler {
         ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -> {
             if (!(entity instanceof ServerPlayer player)) { return true; }
 
-            return GameManager.getInstance().handleHiderDeath(player);
+            return GameManager.getInstance().handlePlayerDeath(player);
         });
     }
 }

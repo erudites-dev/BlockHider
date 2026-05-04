@@ -50,9 +50,9 @@ public class GameManager {
         data.clearPlayers();
         data.setHintUseCount(0);
         assignRoles(participants, manualSeekers, seekerCount);
-        data.setState(GAME_STATE.PREPARING);
+        data.setState(GAME_STATE.COUNTDOWN);
 
-        this.timer.startPreparation(server);
+        this.timer.startCountdown(server);
         ModPackets.broadcastGameState(server);
 
         return true;
@@ -172,11 +172,12 @@ public class GameManager {
         }
     }
 
-    public boolean handleHiderDeath(ServerPlayer player) {
+    public boolean handlePlayerDeath(ServerPlayer player) {
         if (data.getState() != GAME_STATE.RUNNING) { return true; }
 
         PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
-        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return true; }
+        if (playerGameData == null || !playerGameData.isAlive()) { return true; }
+        if (playerGameData.getRole() != GAME_ROLE.SEEKER && playerGameData.getRole() != GAME_ROLE.HIDER) { return true; }
 
         eliminate(player, playerGameData);
         checkVictory(player.level().getServer());
@@ -227,10 +228,27 @@ public class GameManager {
     }
 
     private void checkVictory(MinecraftServer server) {
+        boolean anyHider = false;
+        boolean anySeeker = false;
+
         for (PlayerGameData playerGameData : data.getPlayers()) {
-            if (playerGameData.getRole() == GAME_ROLE.HIDER && playerGameData.isAlive()) { return; }
+            if (!playerGameData.isAlive()) { continue; }
+            if (playerGameData.getRole() == GAME_ROLE.HIDER) { anyHider = true; }
+            else if (playerGameData.getRole() == GAME_ROLE.SEEKER) { anySeeker = true; }
         }
 
-        stop(server);
+        if (!anyHider) {
+            announceVictory(server, GAME_ROLE.SEEKER);
+            stop(server);
+        }
+        else if (!anySeeker) {
+            announceVictory(server, GAME_ROLE.HIDER);
+            stop(server);
+        }
+    }
+
+    private void announceVictory(MinecraftServer server, GAME_ROLE winner) {
+        String text = winner == GAME_ROLE.SEEKER ? "§6[SYSTEM]§r 술래의 승리입니다!" : "§6[SYSTEM]§r 숨은 사람들의 승리입니다!";
+        server.getPlayerList().broadcastSystemMessage(Component.literal(text), false);
     }
 }

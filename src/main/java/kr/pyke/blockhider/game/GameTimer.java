@@ -6,19 +6,26 @@ import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.registry.item.ModItems;
 import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.List;
 
 public class GameTimer {
     private static final int TICKS_PER_SECOND = 20;
     private static final int DEFAULT_BUFF_AMPLIFIER = 0;
+    private static final int COUNTDOWN_DURATION = 5;
+    private static final int[] RUNNING_ALERT_SECONDS = {30, 10, 5, 4, 3, 2, 1};
+    private static final int TITLE_FADE_IN = 0;
+    private static final int TITLE_STAY = 20;
+    private static final int TITLE_FADE_OUT = 10;
 
     private final GameManager gameManager;
     private int tickCounter;
@@ -33,8 +40,8 @@ public class GameTimer {
 
     public int getTotalSeconds() { return this.totalSeconds; }
 
-    public void startPreparation(MinecraftServer server) {
-        this.totalSeconds = ModConfig.getPreparationTimeSeconds();
+    public void startCountdown(MinecraftServer server) {
+        this.totalSeconds = COUNTDOWN_DURATION;
         this.remainingSeconds = this.totalSeconds;
         this.tickCounter = 0;
 
@@ -42,8 +49,12 @@ public class GameTimer {
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
 
-            this.equipForPreparation(player, playerGameData);
+            player.getInventory().clearContent();
+            player.setHealth(player.getMaxHealth());
         }
+
+        applyTitleAnimation(server);
+        broadcastTitle(server, Component.literal(String.valueOf(this.remainingSeconds)).withStyle(ChatFormatting.YELLOW));
     }
 
     public void tick(MinecraftServer server) {
@@ -58,8 +69,8 @@ public class GameTimer {
         if (this.remainingSeconds <= 0) {
             this.onPhaseEnd(server);
         }
-        else if (this.gameManager.getData().getState() == GAME_STATE.RUNNING) {
-            this.applyMatchingPhase(server);
+        else {
+            this.onSecondTick(server);
         }
 
         ModPackets.broadcastGameState(server);
@@ -71,13 +82,46 @@ public class GameTimer {
         this.totalSeconds = 0;
     }
 
+    private void onSecondTick(MinecraftServer server) {
+        GAME_STATE state = this.gameManager.getData().getState();
+
+        if (state == GAME_STATE.COUNTDOWN) {
+            broadcastTitle(server, Component.literal(String.valueOf(this.remainingSeconds)).withStyle(ChatFormatting.YELLOW));
+            return;
+        }
+
+        if (state == GAME_STATE.RUNNING) {
+            this.applyMatchingPhase(server);
+            this.notifyRunningAlert(server, this.remainingSeconds);
+            this.broadcastSeekerActionBar(server);
+        }
+    }
+
     private void onPhaseEnd(MinecraftServer server) {
-        if (this.gameManager.getData().getState() == GAME_STATE.PREPARING) {
+        GAME_STATE state = this.gameManager.getData().getState();
+        if (state == GAME_STATE.COUNTDOWN) {
+            this.startPreparation(server);
+            return;
+        }
+        if (state == GAME_STATE.PREPARING) {
             this.startRunning(server);
             return;
         }
 
         this.gameManager.stop(server);
+    }
+
+    private void startPreparation(MinecraftServer server) {
+        this.gameManager.getData().setState(GAME_STATE.PREPARING);
+        this.totalSeconds = ModConfig.getPreparationTimeSeconds();
+        this.remainingSeconds = this.totalSeconds;
+
+        for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
+            if (player == null) { continue; }
+
+            this.equipForPreparation(player, playerGameData);
+        }
     }
 
     private void startRunning(MinecraftServer server) {
@@ -100,7 +144,7 @@ public class GameTimer {
 
     private void equipForPreparation(ServerPlayer player, PlayerGameData playerGameData) {
         if (playerGameData.getRole() == GAME_ROLE.HIDER) {
-            this.giveHiderItems(player);
+            this.giveItems(player, ModConfig.getHiderItems());
             return;
         }
 
@@ -111,38 +155,21 @@ public class GameTimer {
     }
 
     private void giveSeekerItems(ServerPlayer player) {
-        ItemStack swordItem = new ItemStack(Items.DIAMOND_SWORD);
-        player.getInventory().setItem(0, swordItem);
-        player.getInventory().setSelectedSlot(0);
-
-        ItemStack armorItem = new ItemStack(Items.DIAMOND_CHESTPLATE);
-        player.getInventory().setItem(Inventory.SLOT_BODY_ARMOR, armorItem);
-
-        if (ModConfig.getHintItemCount() != 0) {
-            ItemStack hintItem = new ItemStack(ModItems.HINT_ITEM);
-            player.getInventory().setItem(8, hintItem);
-        }
-
         this.giveItems(player, ModConfig.getSeekerItems());
-    }
 
-    private void giveHiderItems(ServerPlayer player) {
-        ItemStack pickaxeItem = new ItemStack(Items.DIAMOND_PICKAXE);
-        player.getInventory().setItem(0, pickaxeItem);
-        player.getInventory().setSelectedSlot(0);
+        int hintCount = ModConfig.getHintItemCount();
+        if (hintCount == 0) { return; }
 
-        ItemStack throwItem = new ItemStack(Items.SNOWBALL, 99);
-        player.getInventory().setItem(8, throwItem);
-
-        this.giveItems(player, ModConfig.getHiderItems());
+        ItemStack hintStack = new ItemStack(ModItems.HINT_ITEM);
+        player.getInventory().add(hintStack);
     }
 
     private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> entries) {
         for (ModConfig.ItemEntry entry : entries) {
-            ItemStack itemStack = ConfigParsers.toItemStack(entry);
-            if (itemStack.isEmpty()) { continue; }
+            ItemStack stack = ConfigParsers.toItemStack(entry);
+            if (stack.isEmpty()) { continue; }
 
-            player.getInventory().add(itemStack);
+            player.getInventory().add(stack);
         }
     }
 
@@ -181,6 +208,45 @@ public class GameTimer {
                 MobEffectInstance instance = ConfigParsers.toInfiniteEffect(spec, DEFAULT_BUFF_AMPLIFIER);
                 if (instance != null) { player.addEffect(instance); }
             }
+        }
+    }
+
+    private void notifyRunningAlert(MinecraftServer server, int seconds) {
+        for (int alertSecond : RUNNING_ALERT_SECONDS) {
+            if (alertSecond != seconds) { continue; }
+
+            broadcastTitle(server, Component.literal(seconds + "초 남았습니다").withStyle(ChatFormatting.RED));
+            return;
+        }
+    }
+
+    private void broadcastSeekerActionBar(MinecraftServer server) {
+        int hintMax = ModConfig.getHintItemCount();
+        int used = this.gameManager.getData().getHintUseCount();
+        String text = hintMax < 0 ? "힌트: " + used + " / ∞" : "힌트: " + used + " / " + hintMax;
+        Component component = Component.literal(text).withStyle(ChatFormatting.AQUA);
+
+        for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
+            if (playerGameData.getRole() != GAME_ROLE.SEEKER || !playerGameData.isAlive()) { continue; }
+
+            ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
+            if (player == null) { continue; }
+
+            player.sendSystemMessage(component, true);
+        }
+    }
+
+    private void applyTitleAnimation(MinecraftServer server) {
+        ClientboundSetTitlesAnimationPacket packet = new ClientboundSetTitlesAnimationPacket(TITLE_FADE_IN, TITLE_STAY, TITLE_FADE_OUT);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            player.connection.send(packet);
+        }
+    }
+
+    private void broadcastTitle(MinecraftServer server, Component title) {
+        ClientboundSetTitleTextPacket packet = new ClientboundSetTitleTextPacket(title);
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            player.connection.send(packet);
         }
     }
 }
