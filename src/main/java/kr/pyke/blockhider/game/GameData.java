@@ -8,6 +8,7 @@ import java.util.*;
 public class GameData {
     private GAME_STATE state = GAME_STATE.WAITING;
     private final Map<UUID, PlayerGameData> players = new HashMap<>();
+    private int hintUseCount = 0;
 
     public GAME_STATE getState() { return this.state; }
 
@@ -20,6 +21,12 @@ public class GameData {
     public void addPlayer(PlayerGameData data) { this.players.put(data.getUUID(), data); }
 
     public void clearPlayers() { this.players.clear(); }
+
+    public int getHintUseCount() { return this.hintUseCount; }
+
+    public void setHintUseCount(int count) { this.hintUseCount = count; }
+
+    public void incrementHintUseCount() { this.hintUseCount++; }
 
     public int getAliveCount(GAME_ROLE role) {
         int count = 0;

@@ -2,6 +2,7 @@ package kr.pyke.blockhider.game;
 
 import kr.pyke.blockhider.config.ConfigParsers;
 import kr.pyke.blockhider.config.ModConfig;
+import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.registry.item.ModItems;
 import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
@@ -56,10 +57,12 @@ public class GameTimer {
 
         if (this.remainingSeconds <= 0) {
             this.onPhaseEnd(server);
-            return;
+        }
+        else if (this.gameManager.getData().getState() == GAME_STATE.RUNNING) {
+            this.applyMatchingPhase(server);
         }
 
-        if (this.gameManager.getData().getState() == GAME_STATE.RUNNING) { this.applyMatchingPhase(server); }
+        ModPackets.broadcastGameState(server);
     }
 
     public void stop() {
@@ -115,8 +118,10 @@ public class GameTimer {
         ItemStack armorItem = new ItemStack(Items.DIAMOND_CHESTPLATE);
         player.getInventory().setItem(Inventory.SLOT_BODY_ARMOR, armorItem);
 
-        ItemStack hintItem = new ItemStack(ModItems.HINT_ITEM);
-        player.getInventory().setItem(8, hintItem);
+        if (ModConfig.getHintItemCount() != 0) {
+            ItemStack hintItem = new ItemStack(ModItems.HINT_ITEM);
+            player.getInventory().setItem(8, hintItem);
+        }
 
         this.giveItems(player, ModConfig.getSeekerItems());
     }

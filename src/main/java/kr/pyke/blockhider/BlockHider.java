@@ -1,5 +1,6 @@
 package kr.pyke.blockhider;
 
+import kr.pyke.blockhider.command.BlockHiderCommand;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.handler.ServerLifecycleHandler;
 import kr.pyke.blockhider.handler.ServerLivingEntityHandler;
@@ -9,6 +10,7 @@ import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.registry.creativemodetab.ModCreativeModeTabs;
 import kr.pyke.blockhider.registry.item.ModItems;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
@@ -38,6 +40,8 @@ public class BlockHider implements ModInitializer {
         ServerLifecycleHandler.register();
         ServerPlayConnectionHandler.register();
         ServerLivingEntityHandler.register();
+
+        CommandRegistrationCallback.EVENT.register(BlockHiderCommand::register);
     }
 
     public static Identifier id(String path) {

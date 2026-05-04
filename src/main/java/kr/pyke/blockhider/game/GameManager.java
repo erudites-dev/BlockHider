@@ -48,10 +48,12 @@ public class GameManager {
         if (participants.size() <= seekerCount) { return false; }
 
         data.clearPlayers();
+        data.setHintUseCount(0);
         assignRoles(participants, manualSeekers, seekerCount);
         data.setState(GAME_STATE.PREPARING);
 
         this.timer.startPreparation(server);
+        ModPackets.broadcastGameState(server);
 
         return true;
     }
@@ -73,6 +75,7 @@ public class GameManager {
         data.setState(GAME_STATE.WAITING);
 
         ModPackets.broadcastClearAll(server);
+        ModPackets.broadcastGameState(server);
         server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r 게임이 종료되었습니다."), false);
     }
 
@@ -186,6 +189,12 @@ public class GameManager {
         PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
         if (playerGameData == null || playerGameData.getRole() != GAME_ROLE.SEEKER || !playerGameData.isAlive()) { return false; }
 
+        int maxUseCount = ModConfig.getHintItemCount();
+        if (maxUseCount == 0) { return false; }
+        if (maxUseCount > 0 && data.getHintUseCount() >= maxUseCount) { return false; }
+
+        data.incrementHintUseCount();
+
         ServerLevel level = player.level();
         for (PlayerGameData target : data.getPlayers()) {
             if (target.getRole() != GAME_ROLE.HIDER || !target.isAlive()) { continue; }
@@ -196,6 +205,7 @@ public class GameManager {
             HintEffect.spawn(level, hider.getX(), hider.getY(), hider.getZ());
         }
 
+        ModPackets.broadcastGameState(level.getServer());
         return true;
     }
 
@@ -212,6 +222,8 @@ public class GameManager {
         player.setHealth(player.getMaxHealth());
         player.setGameMode(GameType.SPECTATOR);
         player.getInventory().clearContent();
+
+        ModPackets.broadcastGameState(player.level().getServer());
     }
 
     private void checkVictory(MinecraftServer server) {

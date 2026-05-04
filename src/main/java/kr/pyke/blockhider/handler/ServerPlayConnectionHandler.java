@@ -7,6 +7,9 @@ public class ServerPlayConnectionHandler {
     private ServerPlayConnectionHandler() { }
 
     public static void register() {
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ModPackets.sendFullSync(handler.getPlayer()));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            ModPackets.sendFullSync(handler.getPlayer());
+            ModPackets.sendGameState(handler.getPlayer());
+        });
     }
 }
