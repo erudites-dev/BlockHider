@@ -10,6 +10,8 @@ public class GameData {
     private final Map<UUID, PlayerGameData> players = new HashMap<>();
     private int hintUseCount = 0;
 
+    private boolean debugMode = false;
+
     public GAME_STATE getState() { return this.state; }
 
     public void setState(GAME_STATE state) { this.state = state; }
@@ -38,4 +40,8 @@ public class GameData {
 
         return count;
     }
+
+    public boolean isDebugMode() { return this.debugMode; }
+
+    public void setDebugMode(boolean debugMode) { this.debugMode = debugMode; }
 }

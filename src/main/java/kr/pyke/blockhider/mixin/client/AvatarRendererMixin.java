@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AvatarRendererMixin {
     @Inject(method = "extractRenderState*", at = @At("RETURN"))
     private void blockhider$extractRenderState(Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
-        ((TransformedRenderState) state).blockhider$setTransformedBlock(((PlayerTransform) entity).blockhider$getTransformedBlock());
+        PlayerTransform transform = (PlayerTransform) entity;
+        ((TransformedRenderState) state).blockhider$setTransformedBlock(transform.blockhider$getTransformedBlock(), transform.blockhider$getTransformedPos());
     }
 }

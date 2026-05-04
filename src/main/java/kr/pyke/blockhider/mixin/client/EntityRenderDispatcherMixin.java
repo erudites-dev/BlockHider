@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,10 +22,15 @@ public abstract class EntityRenderDispatcherMixin {
         if (!(renderState instanceof TransformedRenderState transformed)) { return; }
 
         BlockState block = transformed.blockhider$getTransformedBlock();
-        if (block == null) { return; }
+        BlockPos blockPos = transformed.blockhider$getTransformedPos();
+        if (block == null || blockPos == null) { return; }
 
-        BlockPos blockPos = BlockPos.containing(renderState.x, renderState.y - 1, renderState.z);
-        TransformedPlayerRenderer.submitBlock(block, blockPos, x, y, z, poseStack, output);
+        Vec3 cameraPos = camera.pos;
+        double blockRelX = blockPos.getX() - cameraPos.x();
+        double blockRelY = blockPos.getY() - cameraPos.y();
+        double blockRelZ = blockPos.getZ() - cameraPos.z();
+
+        TransformedPlayerRenderer.submitBlock(block, blockPos, blockRelX, blockRelY, blockRelZ, poseStack, output);
         ci.cancel();
     }
 }

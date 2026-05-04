@@ -2,11 +2,13 @@ package kr.pyke.blockhider.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.game.GameManager;
+import kr.pyke.blockhider.type.GAME_ROLE;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -32,15 +34,7 @@ public class BlockHiderCommand {
             .then(Commands.literal("시작").executes(BlockHiderCommand::startGame))
             .then(Commands.literal("종료").executes(BlockHiderCommand::stopGame))
             .then(Commands.literal("술래")
-                .then(Commands.argument("p1", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 1))
-                    .then(Commands.argument("p2", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 2))
-                        .then(Commands.argument("p3", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 3))
-                            .then(Commands.argument("p4", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 4))
-                                .then(Commands.argument("p5", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 5)))
-                            )
-                        )
-                    )
-                )
+                .then(Commands.argument("players", StringArgumentType.greedyString()).executes(BlockHiderCommand::startGameWithSeekers))
             )
             .then(Commands.literal("술래인원")
                 .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setSeekerCount))
@@ -64,6 +58,10 @@ public class BlockHiderCommand {
                 )
                 .then(Commands.literal("목록").executes(BlockHiderCommand::listAdmins))
             )
+            .then(Commands.literal("디버그")
+                .then(Commands.literal("도망자").executes(context -> startSolo(context, GAME_ROLE.HIDER)))
+                .then(Commands.literal("술래").executes(context -> startSolo(context, GAME_ROLE.SEEKER)))
+            )
         );
     }
 
@@ -76,26 +74,6 @@ public class BlockHiderCommand {
         }
 
         source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다."), true);
-        return 1;
-    }
-
-    private static int startGameWithSeekers(CommandContext<CommandSourceStack> context, int argCount) throws CommandSyntaxException {
-        CommandSourceStack source = context.getSource();
-        Set<UUID> seekerUUIDs = new LinkedHashSet<>();
-
-        for (int i = 1; i <= argCount; i++) {
-            Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "p" + i);
-            for (ServerPlayer player : players) { seekerUUIDs.add(player.getUUID()); }
-        }
-
-        boolean started = GameManager.getInstance().start(source.getServer(), new ArrayList<>(seekerUUIDs));
-        if (!started) {
-            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임을 시작할 수 없습니다."), true);
-            return 0;
-        }
-
-        int count = seekerUUIDs.size();
-        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다. (술래 " + count + "명 지정)"), true);
         return 1;
     }
 
@@ -213,6 +191,66 @@ public class BlockHiderCommand {
 
         String message = builder.toString();
         source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r " + message), false);
+        return 1;
+    }
+
+    private static int startSolo(CommandContext<CommandSourceStack> context, GAME_ROLE role) {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 플레이어만 사용할 수 있는 명령어입니다."));
+            return 0;
+        }
+
+        boolean started = GameManager.getInstance().startSolo(source.getServer(), player, role);
+        if (!started) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 디버그 게임을 시작할 수 없습니다."));
+            return 0;
+        }
+
+        String roleName = role == GAME_ROLE.HIDER ? "도망자" : "술래";
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 디버그 게임이 시작되었습니다. (" + roleName + ")"), true);
+        return 1;
+    }
+
+    private static int startGameWithSeekers(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        String input = StringArgumentType.getString(context, "players");
+        MinecraftServer server = source.getServer();
+
+        Set<UUID> seekerUUIDs = new LinkedHashSet<>();
+        List<String> notFound = new ArrayList<>();
+
+        for (String name : input.split(",")) {
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) { continue; }
+
+            ServerPlayer target = server.getPlayerList().getPlayerByName(trimmed);
+            if (target == null) {
+                notFound.add(trimmed);
+                continue;
+            }
+
+            seekerUUIDs.add(target.getUUID());
+        }
+
+        if (!notFound.isEmpty()) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 찾을 수 없는 플레이어: " + String.join(", ", notFound)));
+            return 0;
+        }
+        if (seekerUUIDs.isEmpty()) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 술래로 지정된 플레이어가 없습니다."));
+            return 0;
+        }
+
+        boolean started = GameManager.getInstance().start(server, new ArrayList<>(seekerUUIDs));
+        if (!started) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 게임을 시작할 수 없습니다."));
+            return 0;
+        }
+
+        int count = seekerUUIDs.size();
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다. (술래 " + count + "명 지정)"), true);
         return 1;
     }
 }

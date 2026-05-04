@@ -19,7 +19,7 @@ public class ConfigParsers {
         Item item = BuiltInRegistries.ITEM.getValue(id);
         if (item == null) { return ItemStack.EMPTY; }
 
-        return new ItemStack(item, entry.count());
+        return new ItemStack(item, entry.amount());
     }
 
     public static MobEffectInstance toInfiniteEffect(String spec, int amplifierFallback) {

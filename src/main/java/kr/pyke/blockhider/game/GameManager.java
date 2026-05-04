@@ -49,11 +49,13 @@ public class GameManager {
 
         data.clearPlayers();
         data.setHintUseCount(0);
+        data.setDebugMode(false);
         assignRoles(participants, manualSeekers, seekerCount);
         data.setState(GAME_STATE.COUNTDOWN);
 
         this.timer.startCountdown(server);
         ModPackets.broadcastGameState(server);
+        broadcastSeekers(server);
 
         return true;
     }
@@ -90,8 +92,8 @@ public class GameManager {
 
         if (!player.isCrouching()) {
             if (current != null) {
-                transform.blockhider$setTransformedBlock(null);
-                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+                transform.blockhider$setTransformedBlock(null, null);
+                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
             }
 
             return;
@@ -103,23 +105,23 @@ public class GameManager {
 
         if (!TransformableBlocks.isTransformable(level, belowPos, belowState)) {
             if (current != null) {
-                transform.blockhider$setTransformedBlock(null);
-                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+                transform.blockhider$setTransformedBlock(null, null);
+                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
             }
 
             return;
         }
 
         if (current == null) {
-            transform.blockhider$setTransformedBlock(belowState);
+            transform.blockhider$setTransformedBlock(belowState, belowPos);
             double centerX = belowPos.getX() + BLOCK_CENTER_OFFSET;
             double centerZ = belowPos.getZ() + BLOCK_CENTER_OFFSET;
             player.snapTo(centerX, player.getY(), centerZ, player.getYRot(), player.getXRot());
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState);
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
         }
         else if (current != belowState) {
-            transform.blockhider$setTransformedBlock(belowState);
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState);
+            transform.blockhider$setTransformedBlock(belowState, belowPos);
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
         }
     }
 
@@ -131,7 +133,7 @@ public class GameManager {
 
         PlayerTransform transform = (PlayerTransform)player;
         if (transform.blockhider$getTransformedBlock() != null) {
-            transform.blockhider$setTransformedBlock(null);
+            transform.blockhider$setTransformedBlock(null, null);
         }
     }
 
@@ -216,8 +218,8 @@ public class GameManager {
 
         PlayerTransform transform = (PlayerTransform) player;
         if (transform.blockhider$getTransformedBlock() != null) {
-            transform.blockhider$setTransformedBlock(null);
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null);
+            transform.blockhider$setTransformedBlock(null, null);
+            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
         }
 
         player.setHealth(player.getMaxHealth());
@@ -228,6 +230,8 @@ public class GameManager {
     }
 
     private void checkVictory(MinecraftServer server) {
+        if (data.isDebugMode()) { return; }
+
         boolean anyHider = false;
         boolean anySeeker = false;
 
@@ -253,6 +257,11 @@ public class GameManager {
     }
 
     public void handleTimeUp(MinecraftServer server) {
+        if (data.isDebugMode()) {
+            stop(server);
+            return;
+        }
+
         boolean anyHider = false;
         for (PlayerGameData playerGameData : data.getPlayers()) {
             if (!playerGameData.isAlive()) { continue; }
@@ -265,5 +274,37 @@ public class GameManager {
         if (anyHider) { announceVictory(server, GAME_ROLE.HIDER); }
 
         stop(server);
+    }
+
+    public boolean startSolo(MinecraftServer server, ServerPlayer player, GAME_ROLE role) {
+        if (isRunning()) { return false; }
+
+        data.clearPlayers();
+        data.setHintUseCount(0);
+        data.setDebugMode(true);
+        data.addPlayer(new PlayerGameData(player.getUUID(), role));
+
+        data.setState(GAME_STATE.COUNTDOWN);
+        this.timer.startCountdown(server);
+        ModPackets.broadcastGameState(server);
+
+        return true;
+    }
+
+    private void broadcastSeekers(MinecraftServer server) {
+        StringBuilder builder = new StringBuilder();
+        boolean first = true;
+        for (PlayerGameData playerGameData : data.getPlayers()) {
+            if (playerGameData.getRole() != GAME_ROLE.SEEKER) { continue; }
+
+            ServerPlayer seeker = server.getPlayerList().getPlayer(playerGameData.getUUID());
+            String name = seeker != null ? seeker.getDisplayName().getString() : playerGameData.getUUID().toString();
+            if (!first) { builder.append(", "); }
+            builder.append(name);
+            first = false;
+        }
+
+        Component message = Component.literal("§6[SYSTEM]§r 술래: §c" + builder + "§r");
+        server.getPlayerList().broadcastSystemMessage(message, false);
     }
 }

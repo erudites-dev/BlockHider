@@ -13,6 +13,7 @@ import kr.pyke.blockhider.type.GAME_STATE;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
@@ -45,11 +46,9 @@ public class ModPackets {
         ClientPlayNetworking.registerGlobalReceiver(S2C_GameStatePayload.ID, S2C_GameStatePayload::handle);
     }
 
-    public static void broadcastTransform(MinecraftServer server, UUID playerUUID, BlockState block) {
-        S2C_TransformPayload payload = new S2C_TransformPayload(playerUUID, Optional.ofNullable(block));
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ServerPlayNetworking.send(player, payload);
-        }
+    public static void broadcastTransform(MinecraftServer server, UUID playerUuid, BlockState block, BlockPos pos) {
+        S2C_TransformPayload payload = new S2C_TransformPayload(playerUuid, Optional.ofNullable(block), Optional.ofNullable(pos));
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { ServerPlayNetworking.send(player, payload); }
     }
 
     public static void broadcastGameState(MinecraftServer server) {
@@ -59,12 +58,11 @@ public class ModPackets {
     }
 
     public static void sendFullSync(ServerPlayer recipient) {
-        Map<UUID, BlockState> entries = new HashMap<>();
+        Map<UUID, S2C_TransformSyncPayload.TransformEntry> entries = new HashMap<>();
         for (ServerPlayer player : recipient.level().getServer().getPlayerList().getPlayers()) {
             BlockState state = ((PlayerTransform) player).blockhider$getTransformedBlock();
-            if (state != null) {
-                entries.put(player.getUUID(), state);
-            }
+            BlockPos pos = ((PlayerTransform) player).blockhider$getTransformedPos();
+            if (state != null && pos != null) { entries.put(player.getUUID(), new S2C_TransformSyncPayload.TransformEntry(state, pos)); }
         }
         S2C_TransformSyncPayload payload = new S2C_TransformSyncPayload(entries);
         ServerPlayNetworking.send(recipient, payload);

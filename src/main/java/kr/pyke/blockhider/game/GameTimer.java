@@ -8,13 +8,17 @@ import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.List;
 
@@ -22,7 +26,9 @@ public class GameTimer {
     private static final int TICKS_PER_SECOND = 20;
     private static final int DEFAULT_BUFF_AMPLIFIER = 0;
     private static final int COUNTDOWN_DURATION = 5;
-    private static final int[] RUNNING_ALERT_SECONDS = {30, 10, 5, 4, 3, 2, 1};
+    private static final int[] RUNNING_ALERT_SECONDS = { 30, 10, 5, 4, 3, 2, 1 };
+    private static final int[] PREPARING_ALERT_SECONDS = { 10 };
+    private static final int PREPARING_COUNTDOWN_THRESHOLD = 5;
     private static final int TITLE_FADE_IN = 0;
     private static final int TITLE_STAY = 20;
     private static final int TITLE_FADE_OUT = 10;
@@ -90,6 +96,11 @@ public class GameTimer {
             return;
         }
 
+        if (state == GAME_STATE.PREPARING) {
+            this.notifyPreparingAlert(server, this.remainingSeconds);
+            return;
+        }
+
         if (state == GAME_STATE.RUNNING) {
             this.applyMatchingPhase(server);
             this.notifyRunningAlert(server, this.remainingSeconds);
@@ -120,7 +131,13 @@ public class GameTimer {
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
 
-            this.equipForPreparation(player, playerGameData);
+            if (playerGameData.getRole() == GAME_ROLE.HIDER) {
+                this.giveHiderItems(player);
+            }
+            else if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
+                int durationTicks = ModConfig.getPreparationTimeSeconds() * TICKS_PER_SECOND;
+                player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, DEFAULT_BUFF_AMPLIFIER, false, false, true));
+            }
         }
     }
 
@@ -165,11 +182,38 @@ public class GameTimer {
     }
 
     private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> entries) {
-        for (ModConfig.ItemEntry entry : entries) {
+        Inventory inventory = player.getInventory();
+
+        inventory.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+        inventory.setSelectedSlot(0);
+
+        player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE));
+
+        if (ModConfig.getHintItemCount() != 0) {
+            inventory.setItem(8, new ItemStack(ModItems.HINT_ITEM));
+        }
+
+        for (ModConfig.ItemEntry entry : ModConfig.getSeekerItems()) {
             ItemStack stack = ConfigParsers.toItemStack(entry);
             if (stack.isEmpty()) { continue; }
 
-            player.getInventory().add(stack);
+            inventory.add(stack);
+        }
+    }
+
+    private void giveHiderItems(ServerPlayer player) {
+        Inventory inventory = player.getInventory();
+
+        inventory.setItem(0, new ItemStack(Items.DIAMOND_PICKAXE));
+        inventory.setSelectedSlot(0);
+
+        inventory.setItem(1, new ItemStack(Items.SNOWBALL, 99));
+
+        for (ModConfig.ItemEntry entry : ModConfig.getHiderItems()) {
+            ItemStack stack = ConfigParsers.toItemStack(entry);
+            if (stack.isEmpty()) { continue; }
+
+            inventory.add(stack);
         }
     }
 
@@ -211,6 +255,20 @@ public class GameTimer {
         }
     }
 
+    private void notifyPreparingAlert(MinecraftServer server, int seconds) {
+        if (seconds <= PREPARING_COUNTDOWN_THRESHOLD) {
+            broadcastTitle(server, Component.literal(String.valueOf(seconds)).withStyle(ChatFormatting.YELLOW));
+            return;
+        }
+
+        for (int alertSecond : PREPARING_ALERT_SECONDS) {
+            if (alertSecond != seconds) { continue; }
+
+            broadcastMessage(server, Component.literal(seconds + "초 후 술레가 소환됩니다"));
+            return;
+        }
+    }
+
     private void notifyRunningAlert(MinecraftServer server, int seconds) {
         for (int alertSecond : RUNNING_ALERT_SECONDS) {
             if (alertSecond != seconds) { continue; }
@@ -248,5 +306,9 @@ public class GameTimer {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             player.connection.send(packet);
         }
+    }
+
+    private void broadcastMessage(MinecraftServer server, MutableComponent message) {
+        server.getPlayerList().broadcastSystemMessage(message, true);
     }
 }

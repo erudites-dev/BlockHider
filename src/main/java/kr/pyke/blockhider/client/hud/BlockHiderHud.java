@@ -39,14 +39,15 @@ public class BlockHiderHud implements HudElement {
         graphics.text(font, Component.literal(stateLabel(state)), PADDING_X, stateY, COLOR_STATE);
 
         int centerX = graphics.guiWidth() / 2;
-        Component countComp = Component.literal("술래 " + ClientGameState.getAliveSeekers() + " / 숨은 사람 " + ClientGameState.getAliveHiders());
+        Component countComp = Component.literal("술래 " + ClientGameState.getAliveSeekers() + " | 숨은 사람 " + ClientGameState.getAliveHiders());
         graphics.centeredText(font, countComp, centerX, TOP_CENTER_Y, COLOR_TEXT);
     }
 
     private String stateLabel(GAME_STATE state) {
         if (state == GAME_STATE.RUNNING) { return "진행 중"; }
+        else if (state == GAME_STATE.PREPARING) { return "대기"; }
 
-        return "대기";
+        return "";
     }
 
     private String formatTime(int seconds) {
