@@ -7,6 +7,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.util.Objects;
+
 @Mixin(Player.class)
 public abstract class PlayerMixin implements PlayerTransform {
     @Unique private BlockState blockhider$transformedBlock;
@@ -16,13 +18,12 @@ public abstract class PlayerMixin implements PlayerTransform {
 
     @Override public BlockPos blockhider$getTransformedPos() { return this.blockhider$transformedPos; }
 
-
     @Override
-    public void blockhider$setTransformedBlock(BlockState blockState, BlockPos pos) {
-        if (blockState == this.blockhider$transformedBlock && pos == this.blockhider$transformedPos) { return; }
+    public void blockhider$setTransformedBlock(BlockState blockState, BlockPos blockPos) {
+        if (blockState == this.blockhider$transformedBlock && Objects.equals(blockPos, this.blockhider$transformedPos)) { return; }
 
         this.blockhider$transformedBlock = blockState;
-        this.blockhider$transformedPos = pos;
+        this.blockhider$transformedPos = blockPos;
         ((Player) (Object) this).refreshDimensions();
     }
 }

@@ -5,7 +5,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public interface PlayerTransform {
     BlockState blockhider$getTransformedBlock();
-    void blockhider$setTransformedBlock(BlockState blockState, BlockPos pos);
-
     BlockPos blockhider$getTransformedPos();
+
+    void blockhider$setTransformedBlock(BlockState blockState, BlockPos blockPos);
 }

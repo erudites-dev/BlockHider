@@ -20,9 +20,9 @@ public abstract class LivingEntityMixin {
         if (!((Object) this instanceof Player player)) { return; }
 
         BlockState block = ((PlayerTransform)player).blockhider$getTransformedBlock();
-        if (block == null) { return; }
+        BlockPos pos = ((PlayerTransform)player).blockhider$getTransformedPos();
+        if (block == null || pos == null) { return; }
 
-        BlockPos pos = player.blockPosition().below();
         cir.setReturnValue(TransformableBlocks.getDimensions(player.level(), pos, block));
     }
 

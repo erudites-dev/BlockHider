@@ -82,13 +82,14 @@ public class GameManager {
     }
 
     public void tickPlayer(ServerPlayer player) {
-        if (data.getState() != GAME_STATE.RUNNING) { return; }
-
-        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
-        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
+//        if (data.getState() != GAME_STATE.RUNNING) { return; }
+        
+//        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+//        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
 
         PlayerTransform transform = (PlayerTransform) player;
         BlockState current = transform.blockhider$getTransformedBlock();
+        BlockPos currentPos = transform.blockhider$getTransformedPos();
 
         if (!player.isCrouching()) {
             if (current != null) {
@@ -112,17 +113,15 @@ public class GameManager {
             return;
         }
 
-        if (current == null) {
-            transform.blockhider$setTransformedBlock(belowState, belowPos);
-            double centerX = belowPos.getX() + BLOCK_CENTER_OFFSET;
-            double centerZ = belowPos.getZ() + BLOCK_CENTER_OFFSET;
-            player.snapTo(centerX, player.getY(), centerZ, player.getYRot(), player.getXRot());
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
-        }
-        else if (current != belowState) {
-            transform.blockhider$setTransformedBlock(belowState, belowPos);
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
-        }
+        if (current == belowState && belowPos.equals(currentPos)) { return; }
+
+        transform.blockhider$setTransformedBlock(belowState, belowPos);
+
+        double centerX = belowPos.getX() + BLOCK_CENTER_OFFSET;
+        double centerZ = belowPos.getZ() + BLOCK_CENTER_OFFSET;
+        player.snapTo(centerX, player.getY(), centerZ, player.getYRot(), player.getXRot());
+
+        ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
     }
 
     private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {
