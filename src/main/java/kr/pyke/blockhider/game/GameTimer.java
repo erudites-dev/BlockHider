@@ -309,6 +309,6 @@ public class GameTimer {
     }
 
     private void broadcastMessage(MinecraftServer server, MutableComponent message) {
-        server.getPlayerList().broadcastSystemMessage(message, true);
+        server.getPlayerList().broadcastSystemMessage(message, false);
     }
 }

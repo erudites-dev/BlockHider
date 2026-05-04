@@ -2,6 +2,8 @@ package kr.pyke.blockhider.mixin.client;
 
 import kr.pyke.blockhider.client.state.TransformedRenderState;
 import kr.pyke.blockhider.transform.PlayerTransform;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Avatar;
@@ -15,6 +17,10 @@ public abstract class AvatarRendererMixin {
     @Inject(method = "extractRenderState*", at = @At("RETURN"))
     private void blockhider$extractRenderState(Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
         PlayerTransform transform = (PlayerTransform) entity;
-        ((TransformedRenderState) state).blockhider$setTransformedBlock(transform.blockhider$getTransformedBlock(), transform.blockhider$getTransformedPos());
+        TransformedRenderState transformed = (TransformedRenderState) state;
+        transformed.blockhider$setTransformedBlock(transform.blockhider$getTransformedBlock(), transform.blockhider$getTransformedPos());
+
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        transformed.blockhider$setLocalPlayer(localPlayer != null && entity == localPlayer);
     }
 }

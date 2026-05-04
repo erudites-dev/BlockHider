@@ -83,7 +83,7 @@ public class GameManager {
 
     public void tickPlayer(ServerPlayer player) {
 //        if (data.getState() != GAME_STATE.RUNNING) { return; }
-        
+
 //        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
 //        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
 

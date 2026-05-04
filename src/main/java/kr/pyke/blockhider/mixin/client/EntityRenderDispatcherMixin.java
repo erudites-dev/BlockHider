@@ -31,6 +31,9 @@ public abstract class EntityRenderDispatcherMixin {
         double blockRelZ = blockPos.getZ() - cameraPos.z();
 
         TransformedPlayerRenderer.submitBlock(block, blockPos, blockRelX, blockRelY, blockRelZ, poseStack, output);
-        ci.cancel();
+
+        if (!transformed.blockhider$isLocalPlayer()) {
+            ci.cancel();
+        }
     }
 }

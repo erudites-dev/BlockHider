@@ -11,14 +11,20 @@ import org.spongepowered.asm.mixin.Unique;
 public class AvatarRenderStateMixin implements TransformedRenderState {
     @Unique private BlockState blockhider$transformedBlock;
     @Unique private BlockPos blockhider$transformedPos;
+    @Unique private boolean blockhider$isLocalPlayer;
 
     @Override public BlockState blockhider$getTransformedBlock() { return this.blockhider$transformedBlock; }
-
     @Override public BlockPos blockhider$getTransformedPos() { return this.blockhider$transformedPos; }
+    @Override public boolean blockhider$isLocalPlayer() { return this.blockhider$isLocalPlayer; }
 
     @Override
     public void blockhider$setTransformedBlock(BlockState blockState, BlockPos blockPos) {
         this.blockhider$transformedBlock = blockState;
         this.blockhider$transformedPos = blockPos;
+    }
+
+    @Override
+    public void blockhider$setLocalPlayer(boolean isLocalPlayer) {
+        this.blockhider$isLocalPlayer = isLocalPlayer;
     }
 }
