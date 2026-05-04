@@ -7,7 +7,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.game.GameManager;
-import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -18,10 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class BlockHiderCommand {
     private static final int OP_LEVEL = 2;
@@ -35,8 +31,16 @@ public class BlockHiderCommand {
             .requires(source -> source.permissions().hasPermission(new Permission.HasCommandLevel(PermissionLevel.byId(OP_LEVEL))))
             .then(Commands.literal("시작").executes(BlockHiderCommand::startGame))
             .then(Commands.literal("종료").executes(BlockHiderCommand::stopGame))
-            .then(Commands.literal("술레")
-                .then(Commands.argument("targets", EntityArgument.players()).executes(BlockHiderCommand::startGameWithSeekers))
+            .then(Commands.literal("술래")
+                .then(Commands.argument("p1", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 1))
+                    .then(Commands.argument("p2", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 2))
+                        .then(Commands.argument("p3", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 3))
+                            .then(Commands.argument("p4", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 4))
+                                .then(Commands.argument("p5", EntityArgument.players()).executes(context -> startGameWithSeekers(context, 5)))
+                            )
+                        )
+                    )
+                )
             )
             .then(Commands.literal("술래인원")
                 .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setSeekerCount))
@@ -75,23 +79,23 @@ public class BlockHiderCommand {
         return 1;
     }
 
-    private static int startGameWithSeekers(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+    private static int startGameWithSeekers(CommandContext<CommandSourceStack> context, int argCount) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
-        Collection<ServerPlayer> targets = EntityArgument.getPlayers(context, "targets");
+        Set<UUID> seekerUUIDs = new LinkedHashSet<>();
 
-        List<UUID> seekerUUIDs = new ArrayList<>();
-        for (ServerPlayer target : targets) {
-            seekerUUIDs.add(target.getUUID());
-            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 관리자가 §7" + target.getDisplayName().getString() + "§r님을 술레로 지정했습니다."), true);
+        for (int i = 1; i <= argCount; i++) {
+            Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "p" + i);
+            for (ServerPlayer player : players) { seekerUUIDs.add(player.getUUID()); }
         }
 
-        boolean started = GameManager.getInstance().start(source.getServer(), seekerUUIDs);
+        boolean started = GameManager.getInstance().start(source.getServer(), new ArrayList<>(seekerUUIDs));
         if (!started) {
-            source.sendFailure(Component.literal("§6[SYSTEM]§r 게임을 시작할 수 없습니다."));
+            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임을 시작할 수 없습니다."), true);
             return 0;
         }
 
-        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다. (술래 " + targets.size() + "명 지정)"), true);
+        int count = seekerUUIDs.size();
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다. (술래 " + count + "명 지정)"), true);
         return 1;
     }
 
@@ -146,7 +150,7 @@ public class BlockHiderCommand {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            source.sendFailure(Component.literal("§6[SYSTEM]§r 플레이어만 사용할 수 있는 명령어입니다."));
+            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 플레이어만 사용할 수 있는 명령어입니다."), true);
             return 0;
         }
 
@@ -164,7 +168,7 @@ public class BlockHiderCommand {
 
         boolean added = savedData.addAdmin(target.getUUID());
         if (!added) {
-            source.sendFailure(Component.literal("§6[SYSTEM]§r " + target.getDisplayName().getString() + "은(는) 이미 관리자입니다."));
+            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r " + target.getDisplayName().getString() + "은(는) 이미 관리자입니다."), true);
             return 0;
         }
 
@@ -179,7 +183,7 @@ public class BlockHiderCommand {
 
         boolean removed = savedData.removeAdmin(target.getUUID());
         if (!removed) {
-            source.sendFailure(Component.literal("§6[SYSTEM]§r " + target.getDisplayName().getString() + "은(는) 관리자가 아닙니다."));
+            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r " + target.getDisplayName().getString() + "은(는) 관리자가 아닙니다."), true);
             return 0;
         }
 

@@ -98,7 +98,8 @@ fun createVersionString(): String {
     if (!isReleaseBuild) {
         if (buildId != null) {
             builder.append("-build.${buildId}")
-        } else {
+        }
+        else {
             builder.append("-local")
         }
     }

@@ -108,7 +108,7 @@ public class GameTimer {
             return;
         }
 
-        this.gameManager.stop(server);
+        this.gameManager.handleTimeUp(server);
     }
 
     private void startPreparation(MinecraftServer server) {

@@ -251,4 +251,19 @@ public class GameManager {
         String text = winner == GAME_ROLE.SEEKER ? "§6[SYSTEM]§r 술래의 승리입니다!" : "§6[SYSTEM]§r 숨은 사람들의 승리입니다!";
         server.getPlayerList().broadcastSystemMessage(Component.literal(text), false);
     }
+
+    public void handleTimeUp(MinecraftServer server) {
+        boolean anyHider = false;
+        for (PlayerGameData playerGameData : data.getPlayers()) {
+            if (!playerGameData.isAlive()) { continue; }
+            if (playerGameData.getRole() == GAME_ROLE.HIDER) {
+                anyHider = true;
+                break;
+            }
+        }
+
+        if (anyHider) { announceVictory(server, GAME_ROLE.HIDER); }
+
+        stop(server);
+    }
 }
