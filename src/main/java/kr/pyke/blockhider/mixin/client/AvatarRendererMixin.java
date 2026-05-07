@@ -1,16 +1,20 @@
 package kr.pyke.blockhider.mixin.client;
 
+import kr.pyke.blockhider.client.state.ClientGameState;
 import kr.pyke.blockhider.client.state.TransformedRenderState;
 import kr.pyke.blockhider.transform.PlayerTransform;
+import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Avatar;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererMixin {
@@ -30,5 +34,12 @@ public abstract class AvatarRendererMixin {
             state.outlineColor = GLOW_OUTLINE_COLOR;
             state.isInvisible = true;
         }
+    }
+
+    @Inject(method = "shouldShowName*", at = @At("HEAD"), cancellable = true)
+    private void blockhider$shouldShowName(CallbackInfoReturnable<Boolean> cir) {
+        if (!((Object) this instanceof Player)) { return; }
+
+        if (ClientGameState.getState() != GAME_STATE.WAITING) { cir.setReturnValue(false); }
     }
 }

@@ -14,7 +14,8 @@
     "client": [
         "client.AvatarRendererMixin",
         "client.AvatarRenderStateMixin",
-        "client.EntityRenderDispatcherMixin"
+        "client.EntityRenderDispatcherMixin",
+        "client.GuiMixin"
     ],
     "injectors": {
         "defaultRequire": 1
