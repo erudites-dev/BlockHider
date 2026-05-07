@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Entity.class)
@@ -34,7 +35,6 @@ public abstract class EntityMixin {
         double centerZ = blockPos.getZ() + BLOCK_CENTER_OFFSET;
         double minY = blockPos.getY() + 1;
         double half = dimensions.width() / 2d;
-
         return new AABB(centerX - half, minY, centerZ - half, centerX + half, minY + dimensions.height(), centerZ + half);
     }
 
@@ -43,9 +43,7 @@ public abstract class EntityMixin {
         if (!(self instanceof Player player)) { return self.getBoundingBox(); }
 
         PlayerTransform transform = (PlayerTransform) player;
-        if (transform.blockhider$getTransformedBlock() != null) {
-            return player.getType().getDimensions().scale(player.getScale()).makeBoundingBox(player.position());
-        }
+        if (transform.blockhider$getTransformedBlock() != null) { return player.getType().getDimensions().scale(player.getScale()).makeBoundingBox(player.position()); }
 
         return self.getBoundingBox();
     }
@@ -67,6 +65,24 @@ public abstract class EntityMixin {
         PlayerTransform transform = (PlayerTransform) player;
         if (transform.blockhider$getTransformedBlock() != null) {
             cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "push*", at = @At("HEAD"), cancellable = true)
+    private void blockhider$cancelPush(Entity entity, CallbackInfo ci) {
+        if ((Object) this instanceof Player player) {
+            PlayerTransform transform = (PlayerTransform) player;
+            if (transform.blockhider$getTransformedBlock() != null) {
+                ci.cancel();
+                return;
+            }
+        }
+
+        if (entity instanceof Player target) {
+            PlayerTransform transform = (PlayerTransform) target;
+            if (transform.blockhider$getTransformedBlock() != null) {
+                ci.cancel();
+            }
         }
     }
 }

@@ -9,8 +9,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.world.entity.Avatar;
-import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(AvatarRenderer.class)
 public abstract class AvatarRendererMixin {
-    private static final int GLOW_OUTLINE_COLOR = 0xFFFFFFFF;
+    @Unique private static final int GLOW_OUTLINE_COLOR = 0xFFFFFFFF;
 
     @Inject(method = "extractRenderState*", at = @At("RETURN"))
     private void blockhider$extractRenderState(Avatar entity, AvatarRenderState state, float partialTicks, CallbackInfo ci) {
@@ -37,9 +37,9 @@ public abstract class AvatarRendererMixin {
     }
 
     @Inject(method = "shouldShowName*", at = @At("HEAD"), cancellable = true)
-    private void blockhider$shouldShowName(CallbackInfoReturnable<Boolean> cir) {
-        if (!((Object) this instanceof Player)) { return; }
-
-        if (ClientGameState.getState() != GAME_STATE.WAITING) { cir.setReturnValue(false); }
+    private void blockhider$shouldShowName(Avatar entity, double distanceToCameraSq, CallbackInfoReturnable<Boolean> cir) {
+        if (ClientGameState.getState() != GAME_STATE.WAITING) {
+            cir.setReturnValue(false);
+        }
     }
 }

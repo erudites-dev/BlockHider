@@ -9,6 +9,7 @@
         "server.LivingEntityMixin",
         "server.PlayerMixin",
         "server.ServerPlayerMixin",
+        "server.SnowballMixin",
         "server.SnowballItemMixin"
     ],
     "client": [

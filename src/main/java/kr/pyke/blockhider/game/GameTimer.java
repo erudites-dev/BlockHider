@@ -8,6 +8,7 @@ import kr.pyke.blockhider.registry.item.ModItems;
 import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -15,6 +16,7 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -98,6 +100,7 @@ public class GameTimer {
 
         if (state == GAME_STATE.COUNTDOWN) {
             broadcastTitle(server, Component.literal(String.valueOf(this.remainingSeconds)).withStyle(ChatFormatting.YELLOW));
+            broadcastSound(server, SoundEvents.UI_BUTTON_CLICK, SoundSource.MASTER, 1.f, 1.f);
             return;
         }
 
@@ -158,8 +161,7 @@ public class GameTimer {
             if (player == null) { continue; }
 
             player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("게임 시작").withStyle(ChatFormatting.RED)));
-            player.connection.send(new ClientboundSoundPacket(SoundEvents.RAID_HORN, SoundSource.PLAYERS, player.getX(), player.getY(), player.getZ(), 1.f, 1.f, player.getRandom().nextLong()));
-
+            player.connection.send(new ClientboundSoundPacket(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(0), SoundSource.MASTER, player.getX(), player.getY(), player.getZ(), 1.f, 1.f, player.getRandom().nextLong()));
             if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.removeEffect(MobEffects.BLINDNESS);
                 this.giveSeekerItems(player);
@@ -256,6 +258,7 @@ public class GameTimer {
     private void notifyPreparingAlert(MinecraftServer server, int seconds) {
         if (seconds <= PREPARING_COUNTDOWN_THRESHOLD) {
             broadcastTitle(server, Component.literal(String.valueOf(seconds)).withStyle(ChatFormatting.YELLOW));
+            broadcastSound(server, SoundEvents.UI_BUTTON_CLICK, SoundSource.MASTER, 1.f, 1.f);
             return;
         }
 
@@ -308,5 +311,14 @@ public class GameTimer {
 
     private void broadcastMessage(MinecraftServer server, MutableComponent message) {
         server.getPlayerList().broadcastSystemMessage(message, false);
+    }
+
+    private void broadcastSound(MinecraftServer server, Holder<SoundEvent> soundEvents, SoundSource soundSource, float volume, float pitch) {
+        for (PlayerGameData data : this.gameManager.getData().getPlayers()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(data.getUUID());
+            if (player != null) {
+                player.connection.send(new ClientboundSoundPacket(soundEvents, soundSource, player.getX(), player.getY(), player.getZ(), volume, pitch, player.getRandom().nextLong()));
+            }
+        }
     }
 }
