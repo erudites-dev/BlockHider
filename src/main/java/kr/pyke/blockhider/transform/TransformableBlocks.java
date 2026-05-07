@@ -20,7 +20,8 @@ public class TransformableBlocks {
         if (state.hasBlockEntity()) { return true; }
         if (state.is(BlockTags.FENCES)) { return true; }
         if (state.is(BlockTags.LEAVES)) { return true; }
-        if (state.is(BlockTags.IMPERMEABLE)) { return true; }
+        if (state.is(BlockTags.STAIRS)) { return true; }
+        if (state.is(BlockTags.SLABS)) { return true; }
 
         return false;
     }
