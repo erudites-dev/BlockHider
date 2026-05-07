@@ -6,11 +6,12 @@
     "mixins": [
         "server.EntityMixin",
         "server.FlowingFluidMixin",
+        "server.FoodDataMixin",
         "server.LivingEntityMixin",
         "server.PlayerMixin",
         "server.ServerPlayerMixin",
-        "server.SnowballMixin",
-        "server.SnowballItemMixin"
+        "server.SnowballItemMixin",
+        "server.SnowballMixin"
     ],
     "client": [
         "client.AvatarRendererMixin",

@@ -27,8 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
-import java.util.List;
-
 public class GameTimer {
     private static final int TICKS_PER_SECOND = 20;
     private static final int DEFAULT_BUFF_AMPLIFIER = 0;
@@ -161,7 +159,7 @@ public class GameTimer {
             if (player == null) { continue; }
 
             player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("게임 시작").withStyle(ChatFormatting.RED)));
-            player.connection.send(new ClientboundSoundPacket(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(0), SoundSource.MASTER, player.getX(), player.getY(), player.getZ(), 1.f, 1.f, player.getRandom().nextLong()));
+            player.connection.send(new ClientboundSoundPacket(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1), SoundSource.MASTER, player.getX(), player.getY(), player.getZ(), 1.f, 1.f, player.getRandom().nextLong()));
             if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.removeEffect(MobEffects.BLINDNESS);
                 this.giveSeekerItems(player);
@@ -172,7 +170,7 @@ public class GameTimer {
     }
 
     private void giveSeekerItems(ServerPlayer player) {
-        this.giveItems(player, ModConfig.getSeekerItems());
+        this.giveItems(player);
 
         int hintCount = ModConfig.getHintItemCount();
         if (hintCount == 0) { return; }
@@ -181,7 +179,7 @@ public class GameTimer {
         player.getInventory().add(hintStack);
     }
 
-    private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> entries) {
+    private void giveItems(ServerPlayer player) {
         Inventory inventory = player.getInventory();
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
