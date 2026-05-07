@@ -20,27 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class EntityMixin {
     @Unique private static final double BLOCK_CENTER_OFFSET = 0.5d;
 
-    @Inject(method = "canBeCollidedWith", at = @At("HEAD"), cancellable = true)
-    private void blockhider$canBeCollidedWith(@Nullable Entity other, CallbackInfoReturnable<Boolean> cir) {
-        if (!((Object) this instanceof Player player)) { return; }
-
-        if (((PlayerTransform) player).blockhider$getTransformedBlock() != null) {
-            cir.setReturnValue(true);
-        }
-    }
-
-    @Redirect(method = "collide", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
-    private AABB blockhider$redirectGetBoundingBox(Entity self) {
-        if (!(self instanceof Player player)) { return self.getBoundingBox(); }
-
-        if (((PlayerTransform) player).blockhider$getTransformedBlock() == null) { return self.getBoundingBox(); }
-
-        EntityDimensions vanillaDims = player.getType().getDimensions().scale(player.getScale());
-        return vanillaDims.makeBoundingBox(player.position());
-    }
-
     @Redirect(method = "setPos(DDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;makeBoundingBox()Lnet/minecraft/world/phys/AABB;"))
-    private AABB blockhider$redirectMakeBoundingBox(Entity self) {
+    private AABB blockhider$useAttackBox(Entity self) {
         if (!(self instanceof Player player)) { return self.getDimensions(self.getPose()).makeBoundingBox(self.position()); }
 
         PlayerTransform transform = (PlayerTransform) player;
@@ -55,5 +36,37 @@ public abstract class EntityMixin {
         double half = dimensions.width() / 2d;
 
         return new AABB(centerX - half, minY, centerZ - half, centerX + half, minY + dimensions.height(), centerZ + half);
+    }
+
+    @Redirect(method = {"move", "collide"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getBoundingBox()Lnet/minecraft/world/phys/AABB;"))
+    private AABB blockhider$useMovementBox(Entity self) {
+        if (!(self instanceof Player player)) { return self.getBoundingBox(); }
+
+        PlayerTransform transform = (PlayerTransform) player;
+        if (transform.blockhider$getTransformedBlock() != null) {
+            return player.getType().getDimensions().scale(player.getScale()).makeBoundingBox(player.position());
+        }
+
+        return self.getBoundingBox();
+    }
+
+    @Inject(method = "isInWall", at = @At("HEAD"), cancellable = true)
+    private void blockhider$isInsideWall(CallbackInfoReturnable<Boolean> cir) {
+        if (!((Object) this instanceof Player player)) { return; }
+
+        PlayerTransform transform = (PlayerTransform) player;
+        if (transform.blockhider$getTransformedBlock() != null) {
+            cir.setReturnValue(false);
+        }
+    }
+
+    @Inject(method = "canBeCollidedWith", at = @At("HEAD"), cancellable = true)
+    private void blockhider$canBeCollidedWith(@Nullable Entity other, CallbackInfoReturnable<Boolean> cir) {
+        if (!((Object) this instanceof Player player)) { return; }
+
+        PlayerTransform transform = (PlayerTransform) player;
+        if (transform.blockhider$getTransformedBlock() != null) {
+            cir.setReturnValue(false);
+        }
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -157,7 +158,7 @@ public class GameTimer {
             if (player == null) { continue; }
 
             player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("게임 시작").withStyle(ChatFormatting.RED)));
-            player.playSound(SoundEvents.RAID_HORN.value(), 1.f, 1.f);
+            player.connection.send(new ClientboundSoundPacket(SoundEvents.RAID_HORN, SoundSource.PLAYERS, player.getX(), player.getY(), player.getZ(), 1.f, 1.f, player.getRandom().nextLong()));
 
             if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.removeEffect(MobEffects.BLINDNESS);

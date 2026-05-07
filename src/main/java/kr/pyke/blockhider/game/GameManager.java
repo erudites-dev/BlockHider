@@ -85,7 +85,7 @@ public class GameManager {
     public void tickPlayer(ServerPlayer player) {
         GAME_STATE state = data.getState();
         if (state != GAME_STATE.RUNNING && state != GAME_STATE.PREPARING) { return; }
-        
+
         PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
         if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
 
