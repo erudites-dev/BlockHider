@@ -14,6 +14,8 @@ import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -151,13 +153,16 @@ public class GameTimer {
         this.remainingSeconds = this.totalSeconds;
 
         for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
-            if (playerGameData.getRole() != GAME_ROLE.SEEKER) { continue; }
-
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
 
-            player.removeEffect(MobEffects.BLINDNESS);
-            this.giveSeekerItems(player);
+            player.connection.send(new ClientboundSetTitleTextPacket(Component.literal("게임 시작").withStyle(ChatFormatting.RED)));
+            player.playSound(SoundEvents.RAID_HORN.value(), 1.f, 1.f);
+
+            if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
+                player.removeEffect(MobEffects.BLINDNESS);
+                this.giveSeekerItems(player);
+            }
         }
 
         this.applyInitialPhase(server);

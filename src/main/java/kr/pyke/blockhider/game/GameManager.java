@@ -15,7 +15,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 
@@ -84,9 +83,11 @@ public class GameManager {
     }
 
     public void tickPlayer(ServerPlayer player) {
-        //        if (data.getState() != GAME_STATE.RUNNING) { return; }
-        //        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
-        //        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
+        GAME_STATE state = data.getState();
+        if (state != GAME_STATE.RUNNING && state != GAME_STATE.PREPARING) { return; }
+        
+        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
 
         PlayerTransform transform = (PlayerTransform) player;
         BlockState current = transform.blockhider$getTransformedBlock();
@@ -109,11 +110,12 @@ public class GameManager {
 
         BlockPos footPos = player.blockPosition();
         BlockState footState = level.getBlockState(footPos);
+
         if (TransformableBlocks.isTransformable(level, footPos, footState)) {
             targetPos = footPos;
             targetState = footState;
         }
-        else {
+        else if (footState.isAir()) {
             BlockPos belowPos = footPos.below();
             BlockState belowState = level.getBlockState(belowPos);
             if (TransformableBlocks.isTransformable(level, belowPos, belowState)) {
