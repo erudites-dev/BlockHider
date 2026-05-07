@@ -25,14 +25,16 @@ public abstract class EntityRenderDispatcherMixin {
         BlockPos blockPos = transformed.blockhider$getTransformedPos();
         if (block == null || blockPos == null) { return; }
 
+        if (!transformed.blockhider$isLocalPlayer()) {
+            ci.cancel();
+            return;
+        }
+
         Vec3 cameraPos = camera.pos;
         double blockRelX = blockPos.getX() - cameraPos.x();
         double blockRelY = blockPos.getY() - cameraPos.y();
         double blockRelZ = blockPos.getZ() - cameraPos.z();
 
-        boolean isLocal = transformed.blockhider$isLocalPlayer();
-        TransformedPlayerRenderer.submitBlock(block, blockPos, blockRelX, blockRelY, blockRelZ, isLocal, poseStack, output);
-
-        if (!isLocal) { ci.cancel(); }
+        TransformedPlayerRenderer.submitBlock(block, blockPos, blockRelX, blockRelY, blockRelZ, true, poseStack, output);
     }
 }

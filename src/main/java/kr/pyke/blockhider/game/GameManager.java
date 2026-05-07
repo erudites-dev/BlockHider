@@ -10,6 +10,7 @@ import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -83,46 +84,77 @@ public class GameManager {
     }
 
     public void tickPlayer(ServerPlayer player) {
-//        if (data.getState() != GAME_STATE.RUNNING) { return; }
-
-//        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
-//        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
+        //        if (data.getState() != GAME_STATE.RUNNING) { return; }
+        //        PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
+        //        if (playerGameData == null || !playerGameData.isAlive() || playerGameData.getRole() != GAME_ROLE.HIDER) { return; }
 
         PlayerTransform transform = (PlayerTransform) player;
         BlockState current = transform.blockhider$getTransformedBlock();
         BlockPos currentPos = transform.blockhider$getTransformedPos();
+        ServerLevel level = player.level();
+        MinecraftServer server = level.getServer();
 
         if (!player.isCrouching()) {
             if (current != null) {
+                this.broadcastFakeBlock(server, player, currentPos.above(), level.getBlockState(currentPos.above()));
                 transform.blockhider$setTransformedBlock(null, null);
-                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
+                ModPackets.broadcastTransform(server, player.getUUID(), null, null);
             }
 
             return;
         }
 
-        ServerLevel level = player.level();
-        BlockPos belowPos = player.blockPosition().below();
-        BlockState belowState = level.getBlockState(belowPos);
+        BlockPos targetPos = null;
+        BlockState targetState = null;
 
-        if (!TransformableBlocks.isTransformable(level, belowPos, belowState)) {
+        BlockPos footPos = player.blockPosition();
+        BlockState footState = level.getBlockState(footPos);
+        if (TransformableBlocks.isTransformable(level, footPos, footState)) {
+            targetPos = footPos;
+            targetState = footState;
+        }
+        else {
+            BlockPos belowPos = footPos.below();
+            BlockState belowState = level.getBlockState(belowPos);
+            if (TransformableBlocks.isTransformable(level, belowPos, belowState)) {
+                targetPos = belowPos;
+                targetState = belowState;
+            }
+        }
+
+        if (targetPos == null) {
             if (current != null) {
+                this.broadcastFakeBlock(server, player, currentPos.above(), level.getBlockState(currentPos.above()));
                 transform.blockhider$setTransformedBlock(null, null);
-                ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
+                ModPackets.broadcastTransform(server, player.getUUID(), null, null);
             }
 
             return;
         }
 
-        if (current == belowState && belowPos.equals(currentPos)) { return; }
+        if (current == targetState && targetPos.equals(currentPos)) { return; }
 
-        transform.blockhider$setTransformedBlock(belowState, belowPos);
+        if (currentPos != null && !currentPos.equals(targetPos)) {
+            this.broadcastFakeBlock(server, player, currentPos.above(), level.getBlockState(currentPos.above()));
+        }
 
-        double centerX = belowPos.getX() + BLOCK_CENTER_OFFSET;
-        double centerZ = belowPos.getZ() + BLOCK_CENTER_OFFSET;
+        transform.blockhider$setTransformedBlock(targetState, targetPos);
+
+        double centerX = targetPos.getX() + BLOCK_CENTER_OFFSET;
+        double centerZ = targetPos.getZ() + BLOCK_CENTER_OFFSET;
         player.snapTo(centerX, player.getY(), centerZ, player.getYRot(), player.getXRot());
 
-        ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), belowState, belowPos);
+        this.broadcastFakeBlock(server, player, targetPos.above(), targetState);
+        ModPackets.broadcastTransform(server, player.getUUID(), targetState, targetPos);
+    }
+
+    private void broadcastFakeBlock(MinecraftServer server, ServerPlayer except, BlockPos pos, BlockState state) {
+        ClientboundBlockUpdatePacket packet = new ClientboundBlockUpdatePacket(pos, state);
+        for (ServerPlayer target : server.getPlayerList().getPlayers()) {
+            if (target.getUUID().equals(except.getUUID())) { continue; }
+
+            target.connection.send(packet);
+        }
     }
 
     private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {
@@ -131,8 +163,12 @@ public class GameManager {
             player.setGameMode(GameType.ADVENTURE);
         }
 
-        PlayerTransform transform = (PlayerTransform)player;
-        if (transform.blockhider$getTransformedBlock() != null) {
+        PlayerTransform transform = (PlayerTransform) player;
+        BlockPos currentPos = transform.blockhider$getTransformedPos();
+        if (currentPos != null) {
+            ServerLevel level = player.level();
+            BlockPos visualPos = currentPos.above();
+            this.broadcastFakeBlock(level.getServer(), player, visualPos, level.getBlockState(visualPos));
             transform.blockhider$setTransformedBlock(null, null);
         }
     }
@@ -217,9 +253,14 @@ public class GameManager {
         playerGameData.setRole(GAME_ROLE.SPECTATOR);
 
         PlayerTransform transform = (PlayerTransform) player;
-        if (transform.blockhider$getTransformedBlock() != null) {
+        BlockPos currentPos = transform.blockhider$getTransformedPos();
+        if (currentPos != null) {
+            ServerLevel level = player.level();
+            MinecraftServer server = level.getServer();
+            BlockPos visualPos = currentPos.above();
+            this.broadcastFakeBlock(server, player, visualPos, level.getBlockState(visualPos));
             transform.blockhider$setTransformedBlock(null, null);
-            ModPackets.broadcastTransform(player.level().getServer(), player.getUUID(), null, null);
+            ModPackets.broadcastTransform(server, player.getUUID(), null, null);
         }
 
         player.setHealth(player.getMaxHealth());
