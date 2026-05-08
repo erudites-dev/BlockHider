@@ -7,6 +7,7 @@
         "server.EntityMixin",
         "server.FlowingFluidMixin",
         "server.FoodDataMixin",
+        "server.InteractionMixin",
         "server.LivingEntityMixin",
         "server.PlayerMixin",
         "server.ServerPlayerMixin",

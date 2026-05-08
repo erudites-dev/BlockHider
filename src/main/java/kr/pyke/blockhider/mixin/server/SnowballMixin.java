@@ -12,12 +12,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Snowball.class)
 public abstract class SnowballMixin {
-    @Inject(method = "onHitEntity", at = @At("HEAD"))
+    @Inject(method = "onHitEntity", at = @At("HEAD"), cancellable = true)
     private void blockhider$onHitPlayer(EntityHitResult hitResult, CallbackInfo ci) {
         Entity target = hitResult.getEntity();
         if (target instanceof Player player) {
             Snowball snowball = (Snowball) (Object) this;
-            player.hurtServer((ServerLevel) player.level(), player.damageSources().thrown(snowball, snowball.getOwner()), 0.1f);
+            if (player.level() instanceof ServerLevel serverLevel) {
+                player.hurtServer(serverLevel, snowball.damageSources().thrown(snowball, snowball.getOwner()), 0.1f);
+            }
+
+            ci.cancel();
         }
     }
 }
