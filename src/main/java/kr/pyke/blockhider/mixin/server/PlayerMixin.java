@@ -4,7 +4,10 @@ import kr.pyke.blockhider.transform.HitboxOwner;
 import kr.pyke.blockhider.transform.PlayerTransform;
 import kr.pyke.blockhider.transform.TransformableBlocks;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Interaction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -69,26 +72,11 @@ public abstract class PlayerMixin implements PlayerTransform {
     @Inject(method = "tick", at = @At("TAIL"))
     private void blockhider$tickHitbox(CallbackInfo ci) {
         Player player = (Player) (Object) this;
-        if (!player.level().isClientSide() && this.blockhider$hitboxEntity != null) {
-            if (this.blockhider$transformedBlock == null || player.isRemoved() || !player.isAlive() || this.blockhider$transformedPos == null) {
-                this.blockhider$hitboxEntity.discard();
-                this.blockhider$hitboxEntity = null;
-            }
-            else {
-                BlockPos pos = this.blockhider$transformedPos;
-                this.blockhider$hitboxEntity.setPos(pos.getX() + 0.5d, pos.getY() + 1.d, pos.getZ() + 0.5d);
-            }
-        }
-    }
+        if (player.level().isClientSide() || this.blockhider$hitboxEntity == null) { return; }
 
-    @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
-    private void blockhider$redirectAttack(Entity target, CallbackInfo ci) {
-        if (target instanceof HitboxOwner hitbox && hitbox.blockhider$getOwner() != null) {
-            Player owner = hitbox.blockhider$getOwner();
-            if (owner != (Object) this && owner.isAlive()) {
-                ((Player) (Object) this).attack(owner);
-                ci.cancel();
-            }
+        if (this.blockhider$transformedBlock == null || this.blockhider$transformedPos == null || player.isRemoved() || !player.isAlive()) {
+            this.blockhider$hitboxEntity.discard();
+            this.blockhider$hitboxEntity = null;
         }
     }
 }

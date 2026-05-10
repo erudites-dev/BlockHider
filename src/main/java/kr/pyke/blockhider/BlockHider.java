@@ -2,10 +2,7 @@ package kr.pyke.blockhider;
 
 import kr.pyke.blockhider.command.BlockHiderCommand;
 import kr.pyke.blockhider.config.ModConfig;
-import kr.pyke.blockhider.handler.ServerLifecycleHandler;
-import kr.pyke.blockhider.handler.ServerLivingEntityHandler;
-import kr.pyke.blockhider.handler.ServerPlayConnectionHandler;
-import kr.pyke.blockhider.handler.ServerTickHandler;
+import kr.pyke.blockhider.handler.*;
 import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.registry.creativemodetab.ModCreativeModeTabs;
 import kr.pyke.blockhider.registry.item.ModItems;
@@ -40,6 +37,7 @@ public class BlockHider implements ModInitializer {
         ServerLifecycleHandler.register();
         ServerPlayConnectionHandler.register();
         ServerLivingEntityHandler.register();
+        AttackEntityHandler.register();
 
         CommandRegistrationCallback.EVENT.register(BlockHiderCommand::register);
     }
