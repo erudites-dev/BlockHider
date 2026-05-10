@@ -23,7 +23,7 @@ public class HintEffect {
         List<FireworkExplosion> explosions = List.of(new FireworkExplosion(FireworkExplosion.Shape.LARGE_BALL, IntList.of(EXPLOSION_COLOR_ARGB & RGB_MASK), IntList.of(), false, false));
         rocket.set(DataComponents.FIREWORKS, new Fireworks(FLIGHT_DURATION, explosions));
 
-        FireworkRocketEntity firework = new FireworkRocketEntity(level, x, y, z, rocket);
+        FireworkRocketEntity firework = new FireworkRocketEntity(level, x, y + 1, z, rocket);
         level.addFreshEntity(firework);
     }
 }

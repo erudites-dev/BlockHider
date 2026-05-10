@@ -143,8 +143,7 @@ public class GameTimer {
                 this.giveHiderItems(player);
             }
             else if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
-                int durationTicks = ModConfig.getPreparationTimeSeconds() * TICKS_PER_SECOND;
-                player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, durationTicks, DEFAULT_BUFF_AMPLIFIER, false, false, true));
+                player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, MobEffectInstance.INFINITE_DURATION, DEFAULT_BUFF_AMPLIFIER, false, false, true));
             }
         }
     }

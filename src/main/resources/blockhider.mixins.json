@@ -5,6 +5,7 @@
     "compatibilityLevel": "JAVA_25",
     "mixins": [
         "server.EntityMixin",
+        "server.FireworkRocketEntityMixin",
         "server.FlowingFluidMixin",
         "server.FoodDataMixin",
         "server.InteractionMixin",
