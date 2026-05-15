@@ -37,7 +37,6 @@ public class BlockHider implements ModInitializer {
         ServerLifecycleHandler.register();
         ServerPlayConnectionHandler.register();
         ServerLivingEntityHandler.register();
-        AttackEntityHandler.register();
 
         CommandRegistrationCallback.EVENT.register(BlockHiderCommand::register);
     }

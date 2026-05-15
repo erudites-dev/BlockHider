@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.game.GameManager;
+import kr.pyke.blockhider.transform.HitboxOwner;
 import kr.pyke.blockhider.type.GAME_ROLE;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
@@ -18,6 +19,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Interaction;
 
 import java.util.*;
 
@@ -61,6 +65,7 @@ public class BlockHiderCommand {
             .then(Commands.literal("디버그")
                 .then(Commands.literal("도망자").executes(context -> startSolo(context, GAME_ROLE.HIDER)))
                 .then(Commands.literal("술래").executes(context -> startSolo(context, GAME_ROLE.SEEKER)))
+                .then(Commands.literal("히트박스").executes(BlockHiderCommand::spawnHitbox))
             )
         );
     }
@@ -251,6 +256,34 @@ public class BlockHiderCommand {
 
         int count = seekerUUIDs.size();
         source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 게임이 시작되었습니다. (술래 " + count + "명 지정)"), true);
+        return 1;
+    }
+
+    private static int spawnHitbox(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayer();
+        if (player == null) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r 플레이어만 사용할 수 있는 명령어입니다."));
+            return 0;
+        }
+
+        Interaction hitbox = EntityType.INTERACTION.create(player.level(), EntitySpawnReason.COMMAND);
+        if (hitbox == null) {
+            source.sendFailure(Component.literal("§6[SYSTEM]§r Interaction 생성 실패."));
+            return 0;
+        }
+
+        hitbox.setWidth(1.f);
+        hitbox.setHeight(1.f);
+        hitbox.setPos(player.getX(), player.getY(), player.getZ());
+
+        if (hitbox instanceof HitboxOwner owner) {
+            owner.blockhider$setOwner(player);
+        }
+
+        player.level().addFreshEntity(hitbox);
+
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 테스트 Interaction 소환. (owner: " + player.getDisplayName().getString() + ")"), true);
         return 1;
     }
 }
