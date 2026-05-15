@@ -46,20 +46,16 @@ public class InteractionMixin implements HitboxOwner {
     @Inject(method = "skipAttackInteraction(Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
     private void blockhider$redirectAttack(Entity source, CallbackInfoReturnable<Boolean> cir) {
         Interaction self = (Interaction) (Object) this;
-        BlockHider.LOGGER.info("skipAttackInteraction called: attacker={}, owner={}, clientSide={}", source, this.blockhider$owner, self.level().isClientSide());
-
         if (self.level().isClientSide()) { return; }
         if (!(source instanceof Player player)) { return; }
         if (this.blockhider$owner == null || this.blockhider$owner == player || !this.blockhider$owner.isAlive()) { return; }
 
-        BlockHider.LOGGER.info("Redirecting to owner");
         player.attack(this.blockhider$owner);
         cir.setReturnValue(true);
     }
 
     @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
     private void blockhider$redirectHurt(ServerLevel level, DamageSource source, float damage, CallbackInfoReturnable<Boolean> cir) {
-        BlockHider.LOGGER.info("[BlockHider] hurtServer called: source={}, damage={}", source.getEntity(), damage);
         if (this.blockhider$owner == null || !this.blockhider$owner.isAlive()) { return; }
 
         Entity attacker = source.getEntity();

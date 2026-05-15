@@ -28,6 +28,8 @@ public class GameManager {
     private final GameTimer timer = new GameTimer(this);
     private final Random random = new Random();
 
+    public static int snowballCount = 99;
+
     private GameManager() { }
 
     public static GameManager getInstance() { return INSTANCE; }

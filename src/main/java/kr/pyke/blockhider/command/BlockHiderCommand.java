@@ -52,6 +52,9 @@ public class BlockHiderCommand {
             .then(Commands.literal("힌트개수")
                 .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setHintItemCount))
             )
+            .then(Commands.literal("눈덩이")
+                .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setSnowballCount))
+            )
             .then(Commands.literal("스폰").executes(BlockHiderCommand::setSpawnHere))
             .then(Commands.literal("관리자")
                 .then(Commands.literal("추가")
@@ -126,6 +129,14 @@ public class BlockHiderCommand {
         ModConfig.save();
 
         context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 힌트 아이템 개수가 " + value + "개로 설정되었습니다."), true);
+        return 1;
+    }
+
+    private static int setSnowballCount(CommandContext<CommandSourceStack> context) {
+        int value = IntegerArgumentType.getInteger(context, "count");
+        GameManager.snowballCount = value;
+
+        context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 눈덩이 개수가 " + value + "개로 설정되었습니다."), true);
         return 1;
     }
 

@@ -27,6 +27,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
+import java.util.List;
+
 public class GameTimer {
     private static final int TICKS_PER_SECOND = 20;
     private static final int DEFAULT_BUFF_AMPLIFIER = 0;
@@ -169,16 +171,8 @@ public class GameTimer {
     }
 
     private void giveSeekerItems(ServerPlayer player) {
-        this.giveItems(player);
+        this.giveItems(player, ModConfig.getSeekerItems());
 
-        int hintCount = ModConfig.getHintItemCount();
-        if (hintCount == 0) { return; }
-
-        ItemStack hintStack = new ItemStack(ModItems.HINT_ITEM);
-        player.getInventory().add(hintStack);
-    }
-
-    private void giveItems(ServerPlayer player) {
         Inventory inventory = player.getInventory();
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
@@ -189,8 +183,12 @@ public class GameTimer {
         if (ModConfig.getHintItemCount() != 0) {
             inventory.setItem(8, new ItemStack(ModItems.HINT_ITEM));
         }
+    }
 
-        for (ModConfig.ItemEntry entry : ModConfig.getSeekerItems()) {
+    private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> items) {
+        Inventory inventory = player.getInventory();
+
+        for (ModConfig.ItemEntry entry : items) {
             ItemStack stack = ConfigParsers.toItemStack(entry);
             if (stack.isEmpty()) { continue; }
 
@@ -199,19 +197,14 @@ public class GameTimer {
     }
 
     private void giveHiderItems(ServerPlayer player) {
+        this.giveItems(player, ModConfig.getHiderItems());
+
         Inventory inventory = player.getInventory();
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_PICKAXE));
         inventory.setSelectedSlot(0);
 
-        inventory.setItem(1, new ItemStack(Items.SNOWBALL, 99));
-
-        for (ModConfig.ItemEntry entry : ModConfig.getHiderItems()) {
-            ItemStack stack = ConfigParsers.toItemStack(entry);
-            if (stack.isEmpty()) { continue; }
-
-            inventory.add(stack);
-        }
+        inventory.setItem(1, new ItemStack(Items.SNOWBALL, GameManager.snowballCount));
     }
 
     private void applyInitialPhase(MinecraftServer server) {
