@@ -5,7 +5,7 @@
   "name": "BlockHider",
   "description": "",
   "authors": [ "Pyke__Lee" ],
-  "license": "LGPL 3.0",
+  "license": "ARR",
   "environment": "*",
   "entrypoints": {
     "main": [ "kr.pyke.blockhider.BlockHider" ],
