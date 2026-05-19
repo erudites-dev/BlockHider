@@ -24,6 +24,8 @@ public abstract class PlayerMixin implements PlayerTransform {
     @Unique private BlockPos blockhider$transformedPos;
     @Unique private Interaction blockhider$hitboxEntity;
 
+    @Unique private static final float HITBOX_PADDING = 0.025f;
+
     @Override public BlockState blockhider$getTransformedBlock() { return this.blockhider$transformedBlock; }
 
     @Override public BlockPos blockhider$getTransformedPos() { return this.blockhider$transformedPos; }
@@ -52,9 +54,9 @@ public abstract class PlayerMixin implements PlayerTransform {
                 Interaction hitbox = EntityType.INTERACTION.create(player.level(), EntitySpawnReason.COMMAND);
 
                 if (hitbox != null) {
-                    hitbox.setWidth(dimensions.width());
-                    hitbox.setHeight(dimensions.height());
-                    hitbox.setPos(blockPos.getX() + 0.5d, blockPos.getY() + 1.d, blockPos.getZ() + 0.5d);
+                    hitbox.setWidth(dimensions.width() + (HITBOX_PADDING * 2));
+                    hitbox.setHeight(dimensions.height() + (HITBOX_PADDING * 2));
+                    hitbox.setPos(blockPos.getX() + 0.5d, blockPos.getY() + 1.d - HITBOX_PADDING, blockPos.getZ() + 0.5d);
 
                     if (hitbox instanceof HitboxOwner owner) {
                         owner.blockhider$setOwner(player);
