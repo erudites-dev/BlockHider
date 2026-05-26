@@ -126,6 +126,11 @@ public class GameManager {
             }
         }
 
+        if (targetPos != null && !targetPos.equals(currentPos) && isPositionOccupied(server, player, targetPos)) {
+            targetPos = null;
+            targetState = null;
+        }
+
         if (targetPos == null) {
             if (current != null) {
                 this.broadcastFakeBlock(server, player, currentPos.above(), level.getBlockState(currentPos.above()));
@@ -159,6 +164,18 @@ public class GameManager {
 
             target.connection.send(packet);
         }
+    }
+
+    private boolean isPositionOccupied(MinecraftServer server, ServerPlayer excluded, BlockPos pos) {
+        for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+            if (other.getUUID().equals(excluded.getUUID())) { continue; }
+
+            PlayerTransform transform = (PlayerTransform) other;
+            BlockPos otherPos = transform.blockhider$getTransformedPos();
+            if (otherPos != null && otherPos.equals(pos)) { return true; }
+        }
+
+        return false;
     }
 
     private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {

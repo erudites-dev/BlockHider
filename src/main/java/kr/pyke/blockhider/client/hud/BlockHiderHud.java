@@ -11,8 +11,8 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NonNull;
 
 public class BlockHiderHud implements HudElement {
-    private static final int PADDING_X = 4;
-    private static final int PADDING_Y = 4;
+    private static final int PADDING_X = 8;
+    private static final int PADDING_Y = 8;
     private static final float TIME_SCALE = 2.f;
     private static final int LINE_GAP = 2;
     private static final int TOP_CENTER_Y = 4;

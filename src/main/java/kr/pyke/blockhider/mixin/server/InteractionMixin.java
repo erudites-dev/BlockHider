@@ -1,6 +1,5 @@
 package kr.pyke.blockhider.mixin.server;
 
-import kr.pyke.blockhider.BlockHider;
 import kr.pyke.blockhider.transform.HitboxOwner;
 import kr.pyke.blockhider.transform.PlayerTransform;
 import net.minecraft.client.Minecraft;
@@ -35,7 +34,7 @@ public class InteractionMixin implements HitboxOwner {
                     double expectedY = transform.blockhider$getTransformedPos().getY() + 1.d;
                     double expectedZ = transform.blockhider$getTransformedPos().getZ() + 0.5d;
 
-                    if (self.distanceToSqr(expectedX, expectedY, expectedZ) < 0.01) {
+                    if (self.distanceToSqr(expectedX, expectedY, expectedZ) < 0.01d) {
                         cir.setReturnValue(false);
                     }
                 }
