@@ -265,6 +265,7 @@ public class GameManager {
             this.broadcastFakeBlock(server, player, visualPos, level.getBlockState(visualPos));
             transform.blockhider$setTransformedBlock(null, null);
             ModPackets.broadcastTransform(server, player.getUUID(), null, null);
+            server.sendSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())));
         }
 
         player.setHealth(player.getMaxHealth());

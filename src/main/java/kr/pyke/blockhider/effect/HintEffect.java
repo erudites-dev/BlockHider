@@ -3,6 +3,8 @@ package kr.pyke.blockhider.effect;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.projectile.FireworkRocketEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -24,6 +26,7 @@ public class HintEffect {
         rocket.set(DataComponents.FIREWORKS, new Fireworks(FLIGHT_DURATION, explosions));
 
         FireworkRocketEntity firework = new FireworkRocketEntity(level, x, y + 1, z, rocket);
+        level.playSound(null, x, y, z, SoundEvents.FIREWORK_ROCKET_SHOOT, SoundSource.PLAYERS, 1.f, 1.f);
         level.addFreshEntity(firework);
     }
 }

@@ -165,6 +165,10 @@ public class GameTimer {
                 player.removeEffect(MobEffects.BLINDNESS);
                 this.giveSeekerItems(player);
             }
+
+            player.heal(player.getMaxHealth());
+            player.getFoodData().setFoodLevel(20);
+            player.getFoodData().setSaturation(0.f);
         }
 
         this.applyInitialPhase(server);
@@ -255,7 +259,7 @@ public class GameTimer {
         for (int alertSecond : PREPARING_ALERT_SECONDS) {
             if (alertSecond != seconds) { continue; }
 
-            broadcastMessage(server, Component.literal(seconds + "초 후 술레가 소환됩니다"));
+            broadcastMessage(server, Component.literal(seconds + "초 후 술래가 소환됩니다"));
             return;
         }
     }
