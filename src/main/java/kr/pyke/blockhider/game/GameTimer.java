@@ -201,6 +201,8 @@ public class GameTimer {
             inventory.setItem(8, new ItemStack(ModItems.HINT_ITEM));
         }
 
+        inventory.setChanged();
+
         this.giveItems(player, ModConfig.getSeekerItems());
     }
 
@@ -222,6 +224,8 @@ public class GameTimer {
         inventory.setSelectedSlot(0);
 
         inventory.setItem(1, new ItemStack(Items.SNOWBALL, GameManager.snowballCount));
+
+        inventory.setChanged();
 
         this.giveItems(player, ModConfig.getHiderItems());
     }

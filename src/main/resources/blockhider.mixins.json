@@ -4,6 +4,7 @@
     "package": "kr.pyke.blockhider.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixins": [
+        "server.AbstractArrowMixin",
         "server.EntityMixin",
         "server.FireworkRocketEntityMixin",
         "server.FlowingFluidMixin",

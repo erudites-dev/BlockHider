@@ -299,7 +299,7 @@ public class GameManager {
         player.setHealth(player.getMaxHealth());
         player.setGameMode(GameType.SPECTATOR);
         player.getInventory().clearContent();
-        server.sendSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())));
+        server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())), false);
 
         ModPackets.broadcastGameState(player.level().getServer());
     }

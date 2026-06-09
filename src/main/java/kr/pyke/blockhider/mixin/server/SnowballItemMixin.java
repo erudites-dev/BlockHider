@@ -28,7 +28,7 @@ public class SnowballItemMixin {
     }
 
     @Inject(method = "use", at = @At("TAIL"))
-    private static void onUse(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+    private void onUse(Level level, Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         ItemStack itemStack = player.getItemInHand(hand);
 
         player.getCooldowns().addCooldown(itemStack, ModConfig.getSnowballCooldownTicks());
