@@ -1,5 +1,6 @@
 package kr.pyke.blockhider.game;
 
+import kr.pyke.blockhider.BlockHider;
 import kr.pyke.blockhider.config.ConfigParsers;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
@@ -22,6 +23,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -143,9 +147,20 @@ public class GameTimer {
             player.setGameMode(GameType.SURVIVAL);
             if (playerGameData.getRole() == GAME_ROLE.HIDER) {
                 this.giveHiderItems(player);
+
+                AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (attributeInstance != null) {
+                    attributeInstance.setBaseValue(0.1d);
+                    attributeInstance.removeModifier(BlockHider.id("seeker_advantage"));
+                }
             }
             else if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, MobEffectInstance.INFINITE_DURATION, DEFAULT_BUFF_AMPLIFIER, false, false, true));
+
+                AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (attributeInstance != null) {
+                    attributeInstance.setBaseValue(0d);
+                }
             }
         }
     }
@@ -164,6 +179,13 @@ public class GameTimer {
             if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.removeEffect(MobEffects.BLINDNESS);
                 this.giveSeekerItems(player);
+
+                AttributeModifier attributeModifier = new AttributeModifier(BlockHider.id("seeker_advantage"), 0.1d, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+                AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
+                if (attributeInstance != null) {
+                    attributeInstance.setBaseValue(0.1d);
+                    attributeInstance.addOrUpdateTransientModifier(attributeModifier);
+                }
             }
 
             player.heal(player.getMaxHealth());
@@ -276,7 +298,7 @@ public class GameTimer {
     private void broadcastSeekerActionBar(MinecraftServer server) {
         int hintMax = ModConfig.getHintItemCount();
         int used = this.gameManager.getData().getHintUseCount();
-        String text = hintMax < 0 ? "남은 힌트: ∞" : "남은 힌트: " + (hintMax - used);
+        String text = hintMax < 0 ? "남은 힌트: 무제한" : "남은 힌트: " + (hintMax - used) + "개";
         Component component = Component.literal(text);
 
         for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {

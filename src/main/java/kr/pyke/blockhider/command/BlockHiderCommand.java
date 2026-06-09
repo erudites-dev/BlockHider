@@ -29,6 +29,7 @@ public class BlockHiderCommand {
     private static final int OP_LEVEL = 2;
     private static final int MIN_COUNT = 0;
     private static final int MIN_SECONDS = 1;
+    private static final int MIN_COOLDOWN = 0;
 
     private BlockHiderCommand() { }
 
@@ -53,7 +54,12 @@ public class BlockHiderCommand {
                 .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setHintItemCount))
             )
             .then(Commands.literal("눈덩이")
-                .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setSnowballCount))
+                .then(Commands.literal("개수")
+                    .then(Commands.argument("count", IntegerArgumentType.integer(MIN_COUNT)).executes(BlockHiderCommand::setSnowballCount))
+                )
+                .then(Commands.literal("쿨타임")
+                    .then(Commands.argument("ticks", IntegerArgumentType.integer(MIN_COOLDOWN)).executes(BlockHiderCommand::setSnowballCooldown))
+                )
             )
             .then(Commands.literal("스폰").executes(BlockHiderCommand::setSpawnHere))
             .then(Commands.literal("관리자")
@@ -138,6 +144,15 @@ public class BlockHiderCommand {
         GameManager.snowballCount = value;
 
         context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 눈덩이 개수가 " + value + "개로 설정되었습니다."), true);
+        return 1;
+    }
+
+    private static int setSnowballCooldown(CommandContext<CommandSourceStack> context) {
+        int value = IntegerArgumentType.getInteger(context, "ticks");
+        ModConfig.setSnowballCooldownTicks(value);
+        ModConfig.save();
+
+        context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 눈덩이 쿨타임이 " + (value / 20.f) + "초로 설정되었습니다."), true);
         return 1;
     }
 

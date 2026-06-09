@@ -1,5 +1,6 @@
 package kr.pyke.blockhider.game;
 
+import kr.pyke.blockhider.BlockHider;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.effect.HintEffect;
@@ -11,9 +12,13 @@ import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
@@ -181,7 +186,7 @@ public class GameManager {
     private void cleanUpPlayer(ServerPlayer player, PlayerGameData playerGameData) {
         player.getInventory().clearContent();
         if (playerGameData.getRole() == GAME_ROLE.SPECTATOR) {
-            player.setGameMode(GameType.ADVENTURE);
+            player.setGameMode(GameType.SURVIVAL);
         }
 
         PlayerTransform transform = (PlayerTransform) player;
@@ -191,6 +196,13 @@ public class GameManager {
             BlockPos visualPos = currentPos.above();
             this.broadcastFakeBlock(level.getServer(), player, visualPos, level.getBlockState(visualPos));
             transform.blockhider$setTransformedBlock(null, null);
+        }
+
+        player.removeAllEffects();
+        AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (attributeInstance != null) {
+            attributeInstance.setBaseValue(0.1d);
+            attributeInstance.removeModifier(BlockHider.id("seeker_advantage"));
         }
     }
 
