@@ -175,8 +175,6 @@ public class GameTimer {
     }
 
     private void giveSeekerItems(ServerPlayer player) {
-        this.giveItems(player, ModConfig.getSeekerItems());
-
         Inventory inventory = player.getInventory();
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
@@ -187,13 +185,15 @@ public class GameTimer {
         if (ModConfig.getHintItemCount() != 0) {
             inventory.setItem(8, new ItemStack(ModItems.HINT_ITEM));
         }
+
+        this.giveItems(player, ModConfig.getSeekerItems());
     }
 
     private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> items) {
         Inventory inventory = player.getInventory();
 
         for (ModConfig.ItemEntry entry : items) {
-            ItemStack stack = ConfigParsers.toItemStack(entry);
+            ItemStack stack = ConfigParsers.toItemStack(entry, player.level().registryAccess());
             if (stack.isEmpty()) { continue; }
 
             inventory.add(stack);
@@ -201,14 +201,14 @@ public class GameTimer {
     }
 
     private void giveHiderItems(ServerPlayer player) {
-        this.giveItems(player, ModConfig.getHiderItems());
-
         Inventory inventory = player.getInventory();
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_PICKAXE));
         inventory.setSelectedSlot(0);
 
         inventory.setItem(1, new ItemStack(Items.SNOWBALL, GameManager.snowballCount));
+
+        this.giveItems(player, ModConfig.getHiderItems());
     }
 
     private void applyInitialPhase(MinecraftServer server) {
@@ -277,7 +277,7 @@ public class GameTimer {
         int hintMax = ModConfig.getHintItemCount();
         int used = this.gameManager.getData().getHintUseCount();
         String text = hintMax < 0 ? "힌트: " + used + " / ∞" : "힌트: " + used + " / " + hintMax;
-        Component component = Component.literal(text).withStyle(ChatFormatting.AQUA);
+        Component component = Component.literal(text);
 
         for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
             if (playerGameData.getRole() != GAME_ROLE.SEEKER || !playerGameData.isAlive()) { continue; }

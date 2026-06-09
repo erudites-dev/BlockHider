@@ -70,6 +70,7 @@ public class BlockHiderCommand {
                 .then(Commands.literal("술래").executes(context -> startSolo(context, GAME_ROLE.SEEKER)))
                 .then(Commands.literal("히트박스").executes(BlockHiderCommand::spawnHitbox))
             )
+            .then(Commands.literal("리로드").executes(BlockHiderCommand::reloadConfig))
         );
     }
 
@@ -295,6 +296,15 @@ public class BlockHiderCommand {
         player.level().addFreshEntity(hitbox);
 
         source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 테스트 Interaction 소환. (owner: " + player.getDisplayName().getString() + ")"), true);
+        return 1;
+    }
+
+    private static int reloadConfig(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        ServerPlayer player = source.getPlayer();
+
+        ModConfig.load();
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r Config 리로드가 완료되었습니다."), true);
         return 1;
     }
 }

@@ -275,19 +275,19 @@ public class GameManager {
 
         PlayerTransform transform = (PlayerTransform) player;
         BlockPos currentPos = transform.blockhider$getTransformedPos();
+        ServerLevel level = player.level();
+        MinecraftServer server = level.getServer();
         if (currentPos != null) {
-            ServerLevel level = player.level();
-            MinecraftServer server = level.getServer();
             BlockPos visualPos = currentPos.above();
             this.broadcastFakeBlock(server, player, visualPos, level.getBlockState(visualPos));
             transform.blockhider$setTransformedBlock(null, null);
             ModPackets.broadcastTransform(server, player.getUUID(), null, null);
-            server.sendSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())));
         }
 
         player.setHealth(player.getMaxHealth());
         player.setGameMode(GameType.SPECTATOR);
         player.getInventory().clearContent();
+        server.sendSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())));
 
         ModPackets.broadcastGameState(player.level().getServer());
     }
