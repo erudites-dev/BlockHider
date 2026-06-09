@@ -19,12 +19,14 @@ public class ModConfig {
     private static final int DEFAULT_HINT_ITEM_COUNT = -1;
     private static final int DEFAULT_GAME_TIME_SECONDS = 300;
     private static final int DEFAULT_PREP_TIME_SECONDS = 60;
+    private static final int DEFAULT_SNOWBALL_COOLDOWN_TICKS = 10;
     private static final boolean DEFAULT_BUFF_ENABLED = true;
 
     private static int seekerCount = DEFAULT_SEEKER_COUNT;
     private static int hintItemCount = DEFAULT_HINT_ITEM_COUNT;
     private static int gameTimeSeconds = DEFAULT_GAME_TIME_SECONDS;
     private static int preparationTimeSeconds = DEFAULT_PREP_TIME_SECONDS;
+    private static int snowballCooldownTicks = DEFAULT_SNOWBALL_COOLDOWN_TICKS;
 
     private static List<ItemEntry> seekerItems = new ArrayList<>();
     private static List<ItemEntry> hiderItems = new ArrayList<>();
@@ -49,6 +51,7 @@ public class ModConfig {
             hintItemCount = getInt(game, "hint_item_count", DEFAULT_HINT_ITEM_COUNT);
             gameTimeSeconds = getInt(game, "game_time_seconds", DEFAULT_GAME_TIME_SECONDS);
             preparationTimeSeconds = getInt(game, "preparation_time_seconds", DEFAULT_PREP_TIME_SECONDS);
+            snowballCooldownTicks = getInt(game, "snowball_cooldown_ticks", DEFAULT_SNOWBALL_COOLDOWN_TICKS);
 
             seekerItems = readItemList(root, "seeker_items");
             hiderItems = readItemList(root, "hider_items");
@@ -71,6 +74,7 @@ public class ModConfig {
             game.addProperty("hint_item_count", hintItemCount);
             game.addProperty("game_time_seconds", gameTimeSeconds);
             game.addProperty("preparation_time_seconds", preparationTimeSeconds);
+            game.addProperty("snowball_cooldown_ticks", snowballCooldownTicks);
             root.add("game", game);
 
             root.add("seeker_items", writeItemList(seekerItems));
@@ -123,9 +127,10 @@ public class ModConfig {
             String item = getString(entry, "item", "");
             int amount = getInt(entry, "amount", 1);
             List<String> enchantments = readStringArray(entry, "enchantments");
+            String components = getString(entry, "components", "");
             if (item.isEmpty()) { continue; }
 
-            result.add(new ItemEntry(item, amount, enchantments));
+            result.add(new ItemEntry(item, amount, enchantments, components));
         }
         return result;
     }
@@ -166,6 +171,8 @@ public class ModConfig {
             for (String enchantment : entry.enchantments()) { enchArray.add(enchantment); }
             obj.add("enchantments", enchArray);
 
+            obj.addProperty("components", entry.components());
+
             array.add(obj);
         }
         return array;
@@ -190,6 +197,7 @@ public class ModConfig {
     public static int getHintItemCount() { return hintItemCount; }
     public static int getGameTimeSeconds() { return gameTimeSeconds; }
     public static int getPreparationTimeSeconds() { return preparationTimeSeconds; }
+    public static int getSnowballCooldownTicks() { return snowballCooldownTicks; }
     public static List<ItemEntry> getSeekerItems() { return Collections.unmodifiableList(seekerItems); }
     public static List<ItemEntry> getHiderItems() { return Collections.unmodifiableList(hiderItems); }
     public static boolean isBuffEnabled() { return buffEnabled; }
@@ -199,8 +207,9 @@ public class ModConfig {
     public static void setHintItemCount(int value) { hintItemCount = value; }
     public static void setGameTimeSeconds(int value) { gameTimeSeconds = value; }
     public static void setPreparationTimeSeconds(int value) { preparationTimeSeconds = value; }
+    public static void setSnowballCooldownTicks(int value) { snowballCooldownTicks = value; }
 
 
-    public record ItemEntry(String itemID, int amount, List<String> enchantments) { }
+    public record ItemEntry(String itemID, int amount, List<String> enchantments, String components) { }
     public record BuffPhase(int remainingTimeSeconds, List<String> effects) { }
 }

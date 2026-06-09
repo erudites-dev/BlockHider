@@ -140,7 +140,7 @@ public class GameTimer {
             if (player == null) { continue; }
 
             GameManager.getInstance().teleportToSpawn(player, BlockHiderSavedData.get(server));
-            player.setGameMode(GameType.ADVENTURE);
+            player.setGameMode(GameType.SURVIVAL);
             if (playerGameData.getRole() == GAME_ROLE.HIDER) {
                 this.giveHiderItems(player);
             }

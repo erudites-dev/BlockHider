@@ -1,5 +1,10 @@
 package kr.pyke.blockhider.config;
 
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import kr.pyke.blockhider.BlockHider;
+import net.minecraft.commands.arguments.item.ItemInput;
+import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -27,6 +32,7 @@ public class ConfigParsers {
 
         ItemStack stack = new ItemStack(item, entry.amount());
         applyEnchantments(stack, entry.enchantments(), registries);
+        applyComponents(stack, entry.itemID(), entry.components(), registries);
 
         return stack;
     }
@@ -43,6 +49,20 @@ public class ConfigParsers {
 
             ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, enchantID);
             lookup.get(key).ifPresent(holder -> stack.enchant(holder, level));
+        }
+    }
+
+    private static void applyComponents(ItemStack stack, String itemID, String components, HolderLookup.Provider registries) {
+        if (components == null || components.isEmpty()) { return; }
+
+        try {
+            ItemParser parser = new ItemParser(registries);
+            StringReader reader = new StringReader(itemID + components);
+            ItemInput result = parser.parse(reader);
+            stack.applyComponents(result.components());
+        }
+        catch (CommandSyntaxException e) {
+            BlockHider.LOGGER.error("Failed to parse item components: {}{}", itemID, components, e);
         }
     }
 
