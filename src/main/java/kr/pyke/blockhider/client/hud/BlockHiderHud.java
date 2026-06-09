@@ -15,7 +15,7 @@ public class BlockHiderHud implements HudElement {
     private static final int PADDING_Y = 8;
     private static final float TIME_SCALE = 2.f;
     private static final int LINE_GAP = 2;
-    private static final int TOP_CENTER_Y = 4;
+    private static final int TOP_CENTER_Y = 8;
     private static final int COLOR_TIME = 0xFFFFFFFF;
     private static final int COLOR_STATE = 0xFFAAAAAA;
     private static final int COLOR_TEXT = 0xFFFFFFFF;

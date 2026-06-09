@@ -107,6 +107,7 @@ public class GameManager {
                 this.broadcastFakeBlock(server, player, currentPos.above(), level.getBlockState(currentPos.above()));
                 transform.blockhider$setTransformedBlock(null, null);
                 ModPackets.broadcastTransform(server, player.getUUID(), null, null);
+                player.sendSystemMessage(Component.empty(), true);
             }
 
             return;
@@ -117,6 +118,8 @@ public class GameManager {
 
         BlockPos footPos = player.blockPosition();
         BlockState footState = level.getBlockState(footPos);
+
+        player.sendSystemMessage(Component.literal("변신 중"), true);
 
         if (TransformableBlocks.isTransformable(level, footPos, footState)) {
             targetPos = footPos;
