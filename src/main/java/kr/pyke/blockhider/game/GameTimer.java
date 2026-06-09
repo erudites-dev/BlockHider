@@ -150,17 +150,11 @@ public class GameTimer {
 
                 AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (attributeInstance != null) {
-                    attributeInstance.setBaseValue(0.1d);
                     attributeInstance.removeModifier(BlockHider.id("seeker_advantage"));
                 }
             }
             else if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, MobEffectInstance.INFINITE_DURATION, DEFAULT_BUFF_AMPLIFIER, false, false, true));
-
-                AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
-                if (attributeInstance != null) {
-                    attributeInstance.setBaseValue(0d);
-                }
             }
         }
     }
@@ -183,7 +177,6 @@ public class GameTimer {
                 AttributeModifier attributeModifier = new AttributeModifier(BlockHider.id("seeker_advantage"), 0.1d, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
                 AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (attributeInstance != null) {
-                    attributeInstance.setBaseValue(0.1d);
                     attributeInstance.addOrUpdateTransientModifier(attributeModifier);
                 }
             }

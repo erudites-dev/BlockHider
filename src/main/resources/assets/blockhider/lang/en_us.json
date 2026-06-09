@@ -1,4 +1,6 @@
 {
     "itemGroup.blockhider.creative_tab": "BlockHider",
-    "item.blockhider.hint_item": "Hint Item"
+    "item.blockhider.hint_item": "Hint Item",
+    "item.blockhider.ghost_block": "Ghost Block",
+    "block.blockhider.ghost_block": "Ghost Block"
 }

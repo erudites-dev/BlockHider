@@ -4,6 +4,7 @@ import kr.pyke.blockhider.command.BlockHiderCommand;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.handler.*;
 import kr.pyke.blockhider.network.ModPackets;
+import kr.pyke.blockhider.registry.block.ModBlocks;
 import kr.pyke.blockhider.registry.creativemodetab.ModCreativeModeTabs;
 import kr.pyke.blockhider.registry.item.ModItems;
 import net.fabricmc.api.ModInitializer;
@@ -30,6 +31,7 @@ public class BlockHider implements ModInitializer {
         ModPackets.registerCodec();
         ModPackets.registerServer();
 
+        ModBlocks.register();
         ModItems.register();
         ModCreativeModeTabs.register();
 

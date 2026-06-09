@@ -34,6 +34,9 @@ public abstract class AvatarRendererMixin {
             state.outlineColor = GLOW_OUTLINE_COLOR;
             state.isInvisible = true;
         }
+        else if (!isLocal && localPlayer != null && localPlayer.isSpectator() && transform.blockhider$getTransformedBlock() != null) {
+            state.isInvisible = true;
+        }
     }
 
     @Inject(method = "shouldShowName*", at = @At("HEAD"), cancellable = true)

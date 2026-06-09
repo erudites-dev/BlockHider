@@ -1,5 +1,6 @@
 package kr.pyke.blockhider.transform;
 
+import kr.pyke.blockhider.registry.block.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityDimensions;
@@ -18,6 +19,7 @@ public class TransformableBlocks {
 
     public static boolean isTransformable(BlockGetter level, BlockPos pos, BlockState state) {
         if (state.isAir()) { return false; }
+        if (state.is(ModBlocks.GHOST_BLOCK)) { return false; }
         if (state.isCollisionShapeFullBlock(level, pos)) { return true; }
         if (state.hasBlockEntity()) { return true; }
         if (state.getBlock() instanceof IronBarsBlock) { return true; }

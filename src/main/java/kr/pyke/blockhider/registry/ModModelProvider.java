@@ -1,5 +1,6 @@
 package kr.pyke.blockhider.registry;
 
+import kr.pyke.blockhider.registry.block.ModBlocks;
 import kr.pyke.blockhider.registry.item.ModItems;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
@@ -15,7 +16,7 @@ public class ModModelProvider extends FabricModelProvider {
 
     @Override
     public void generateBlockStateModels(@NonNull BlockModelGenerators blockModelGenerators) {
-
+        blockModelGenerators.createTrivialCube(ModBlocks.GHOST_BLOCK);
     }
 
     @Override

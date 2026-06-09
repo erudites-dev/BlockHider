@@ -3,6 +3,8 @@ package kr.pyke.blockhider.mixin.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import kr.pyke.blockhider.client.renderer.TransformedPlayerRenderer;
 import kr.pyke.blockhider.client.state.TransformedRenderState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -24,6 +26,9 @@ public abstract class EntityRenderDispatcherMixin {
         BlockState block = transformed.blockhider$getTransformedBlock();
         BlockPos blockPos = transformed.blockhider$getTransformedPos();
         if (block == null || blockPos == null) { return; }
+
+        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        if (localPlayer != null && localPlayer.isSpectator()) { return; }
 
         if (!transformed.blockhider$isLocalPlayer()) {
             ci.cancel();

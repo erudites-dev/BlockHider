@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north": { "model": "blockhider:block/ghost_block" },
+        "facing=east": { "model": "blockhider:block/ghost_block", "y": 90 },
+        "facing=south": { "model": "blockhider:block/ghost_block", "y": 180 },
+        "facing=west": { "model": "blockhider:block/ghost_block", "y": 270 }
+    }
+}

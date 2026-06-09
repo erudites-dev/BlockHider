@@ -1,0 +1,21 @@
+{
+    "parent": "block/block",
+    "textures": {
+        "all": "blockhider:block/ghost_block",
+        "particle": "blockhider:block/ghost_block"
+    },
+    "elements": [
+        {
+            "from": [0, 0, 4],
+            "to": [16, 16, 12],
+            "faces": {
+                "north": { "uv": [0, 0, 16, 16], "texture": "#all" },
+                "south": { "uv": [0, 0, 16, 16], "texture": "#all" },
+                "east": { "uv": [4, 0, 12, 16], "texture": "#all" },
+                "west": { "uv": [4, 0, 12, 16], "texture": "#all" },
+                "up": { "uv": [0, 4, 16, 12], "texture": "#all" },
+                "down": { "uv": [0, 4, 16, 12], "texture": "#all" }
+            }
+        }
+    ]
+}

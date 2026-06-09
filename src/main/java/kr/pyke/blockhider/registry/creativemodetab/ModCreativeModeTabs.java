@@ -19,6 +19,7 @@ public class ModCreativeModeTabs {
         .title(Component.translatable("itemGroup.blockhider.creative_tab"))
         .displayItems((params, output) -> {
             output.accept(ModItems.HINT_ITEM);
+            output.accept(ModItems.GHOST_BLOCK_ITEM);
         })
         .build();
 
