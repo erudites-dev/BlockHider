@@ -6,6 +6,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.NonNull;
 
@@ -20,6 +21,9 @@ public class HintItem extends Item {
 
         boolean used = GameManager.getInstance().tryUseHint(serverPlayer);
         if (!used) { return InteractionResult.FAIL; }
+
+        ItemStack itemStack = player.getItemInHand(hand);
+        player.getCooldowns().addCooldown(itemStack, 20);
 
         return InteractionResult.SUCCESS;
     }

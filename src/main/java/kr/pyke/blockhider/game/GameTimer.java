@@ -276,7 +276,7 @@ public class GameTimer {
     private void broadcastSeekerActionBar(MinecraftServer server) {
         int hintMax = ModConfig.getHintItemCount();
         int used = this.gameManager.getData().getHintUseCount();
-        String text = hintMax < 0 ? "힌트: " + used + " / ∞" : "힌트: " + used + " / " + hintMax;
+        String text = hintMax < 0 ? "남은 힌트: ∞" : "남은 힌트: " + (hintMax - used);
         Component component = Component.literal(text);
 
         for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
