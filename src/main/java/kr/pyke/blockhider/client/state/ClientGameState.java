@@ -15,6 +15,8 @@ public class ClientGameState {
     private static int hintUsed = 0;
     private static int hintMax = 0;
 
+    private static String seekers = "";
+
     private ClientGameState() { }
 
     public static void update(GAME_STATE newState, int newRemainingSeconds, int newTotalSeconds, Optional<GAME_ROLE> newRole, int newAliveSeekers, int newAliveHiders, int newHintUsed, int newHintMax) {
@@ -26,6 +28,10 @@ public class ClientGameState {
         aliveHiders = newAliveHiders;
         hintUsed = newHintUsed;
         hintMax = newHintMax;
+    }
+
+    public static void update(String seekers) {
+        ClientGameState.seekers = seekers;
     }
 
     public static GAME_STATE getState() { return state; }
@@ -43,4 +49,6 @@ public class ClientGameState {
     public static int getHintUsed() { return hintUsed; }
 
     public static int getHintMax() { return hintMax; }
+
+    public static String getSeekers() { return seekers; }
 }

@@ -1,8 +1,12 @@
 package kr.pyke.blockhider.handler;
 
+import kr.pyke.blockhider.game.GameManager;
 import kr.pyke.blockhider.network.ModPackets;
+import kr.pyke.blockhider.network.payload.s2c.S2C_SeekerListPayload;
 import kr.pyke.blockhider.transform.PlayerTransform;
+import kr.pyke.blockhider.type.GAME_ROLE;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.MinecraftServer;
@@ -19,6 +23,7 @@ public class ServerPlayConnectionHandler {
             ModPackets.sendFullSync(player);
             ModPackets.sendGameState(player);
             sendFakeBlocksToJoiningPlayer(server, player);
+            sendSeekerList(server);
         });
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
@@ -52,5 +57,22 @@ public class ServerPlayConnectionHandler {
             ClientboundBlockUpdatePacket packet = new ClientboundBlockUpdatePacket(visualPos, block);
             player.connection.send(packet);
         }
+    }
+
+    public static void sendSeekerList(MinecraftServer server) {
+        StringBuilder seekers = new StringBuilder();
+
+        GameManager.getInstance().getData().getPlayers().forEach(playerGameData -> {
+            if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
+                ServerPlayer seeker = server.getPlayerList().getPlayer(playerGameData.getUUID());
+                if (seeker == null) { return; }
+
+                if (seekers.isEmpty()) { seekers.append(seeker.getDisplayName().getString()); }
+                else { seekers.append(", ").append(seeker.getDisplayName().getString()); }
+            }
+        });
+
+        S2C_SeekerListPayload payload = new S2C_SeekerListPayload(seekers.toString());
+        server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, payload));
     }
 }

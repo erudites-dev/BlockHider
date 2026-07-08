@@ -41,6 +41,8 @@ public class BlockHiderHud implements HudElement {
         int centerX = graphics.guiWidth() / 2;
         Component countComp = Component.literal("술래 " + ClientGameState.getAliveSeekers() + " | 숨은 사람 " + ClientGameState.getAliveHiders());
         graphics.centeredText(font, countComp, centerX, TOP_CENTER_Y, COLOR_TEXT);
+
+        graphics.centeredText(font, Component.literal(ClientGameState.getSeekers()), centerX, TOP_CENTER_Y + 12, COLOR_TEXT);
     }
 
     private String stateLabel(GAME_STATE state) {

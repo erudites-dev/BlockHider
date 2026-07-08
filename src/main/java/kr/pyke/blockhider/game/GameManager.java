@@ -5,19 +5,22 @@ import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.effect.HintEffect;
 import kr.pyke.blockhider.network.ModPackets;
+import kr.pyke.blockhider.network.payload.s2c.S2C_SeekerListPayload;
 import kr.pyke.blockhider.transform.PlayerTransform;
 import kr.pyke.blockhider.transform.TransformableBlocks;
 import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -73,10 +76,24 @@ public class GameManager {
 
         this.timer.stop();
 
+        StringBuilder alive = new StringBuilder();
+        StringBuilder dead = new StringBuilder();
+
         BlockHiderSavedData savedData = BlockHiderSavedData.get(server);
         for (PlayerGameData playerGameData : data.getPlayers()) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
+            if (playerGameData.getRole() == GAME_ROLE.SEEKER) { continue; }
+
+            if (playerGameData.isAlive()) {
+                if (alive.isEmpty()) { alive.append(player.getDisplayName().getString()); }
+                else { alive.append(", ").append(player.getDisplayName().getString()); }
+            }
+            else {
+                if (dead.isEmpty()) { dead.append(player.getDisplayName().getString()); }
+                else { dead.append(", ").append(player.getDisplayName().getString()); }
+            }
+
             cleanUpPlayer(player, playerGameData);
             teleportToSpawn(player, savedData);
         }
@@ -87,6 +104,8 @@ public class GameManager {
         ModPackets.broadcastClearAll(server);
         ModPackets.broadcastGameState(server);
         server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r 게임이 종료되었습니다."), false);
+        if (!alive.isEmpty()) { server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r 생존: " + alive), false); }
+        if (!dead.isEmpty()) { server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r 탈락: " + dead), false); }
     }
 
     public void tickPlayer(ServerPlayer player) {
@@ -119,8 +138,6 @@ public class GameManager {
         BlockPos footPos = player.blockPosition();
         BlockState footState = level.getBlockState(footPos);
 
-        player.sendSystemMessage(Component.literal("변신 중"), true);
-
         if (TransformableBlocks.isTransformable(level, footPos, footState)) {
             targetPos = footPos;
             targetState = footState;
@@ -148,6 +165,8 @@ public class GameManager {
 
             return;
         }
+
+        player.sendSystemMessage(Component.literal("변신 중"), true);
 
         if (current == targetState && targetPos.equals(currentPos)) { return; }
 
@@ -204,9 +223,10 @@ public class GameManager {
         player.removeAllEffects();
         AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
         if (attributeInstance != null) {
-            attributeInstance.setBaseValue(0.1d);
             attributeInstance.removeModifier(BlockHider.id("seeker_advantage"));
         }
+        player.removeEffect(MobEffects.BLINDNESS);
+        player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, MobEffectInstance.INFINITE_DURATION, 0, false, false, false));
     }
 
     public void teleportToSpawn(ServerPlayer player, BlockHiderSavedData savedData) {
@@ -246,14 +266,14 @@ public class GameManager {
         }
     }
 
-    public boolean handlePlayerDeath(ServerPlayer player) {
+    public boolean handlePlayerDeath(ServerPlayer player, DamageSource damageSource) {
         if (data.getState() != GAME_STATE.RUNNING) { return true; }
 
         PlayerGameData playerGameData = data.getPlayerData(player.getUUID());
         if (playerGameData == null || !playerGameData.isAlive()) { return true; }
         if (playerGameData.getRole() != GAME_ROLE.SEEKER && playerGameData.getRole() != GAME_ROLE.HIDER) { return true; }
 
-        eliminate(player, playerGameData);
+        eliminate(player, playerGameData, damageSource);
         checkVictory(player.level().getServer());
         return false;
     }
@@ -284,7 +304,7 @@ public class GameManager {
         return true;
     }
 
-    private void eliminate(ServerPlayer player, PlayerGameData playerGameData) {
+    private void eliminate(ServerPlayer player, PlayerGameData playerGameData, DamageSource damageSource) {
         playerGameData.setAlive(false);
         playerGameData.setRole(GAME_ROLE.SPECTATOR);
 
@@ -302,7 +322,22 @@ public class GameManager {
         player.setHealth(player.getMaxHealth());
         player.setGameMode(GameType.SPECTATOR);
         player.getInventory().clearContent();
-        server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())), false);
+
+        if (damageSource.getEntity() instanceof ServerPlayer reason) {
+
+            PlayerGameData reasonGameData = GameManager.getInstance().getData().getPlayerData(reason.getUUID());
+            if (reasonGameData != null) {
+                if (reasonGameData.getRole() == GAME_ROLE.SEEKER) {
+                    server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님의 팀킬로 §7%s§r님이 탈락하였습니다.", reason.getDisplayName().getString(), player.getDisplayName().getString())), false);
+                }
+                else if (reasonGameData.getRole() == GAME_ROLE.HIDER) {
+                    server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r 술래가 §7%s§r님을 탈락시켰습니다.", player.getDisplayName().getString())), false);
+                }
+            }
+        }
+        else {
+            server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 탈락하였습니다.", player.getDisplayName().getString())), false);
+        }
 
         ModPackets.broadcastGameState(player.level().getServer());
     }
@@ -384,5 +419,8 @@ public class GameManager {
 
         Component message = Component.literal("§6[SYSTEM]§r 술래: §c" + builder + "§r");
         server.getPlayerList().broadcastSystemMessage(message, false);
+
+        S2C_SeekerListPayload payload = new S2C_SeekerListPayload(builder.toString());
+        server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, payload));
     }
 }

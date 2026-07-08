@@ -12,9 +12,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
-import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -152,6 +150,8 @@ public class GameTimer {
                 if (attributeInstance != null) {
                     attributeInstance.removeModifier(BlockHider.id("seeker_advantage"));
                 }
+
+                player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, MobEffectInstance.INFINITE_DURATION, 0, false, false, false));
             }
             else if (playerGameData.getRole() == GAME_ROLE.SEEKER) {
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, MobEffectInstance.INFINITE_DURATION, DEFAULT_BUFF_AMPLIFIER, false, false, true));
@@ -174,11 +174,13 @@ public class GameTimer {
                 player.removeEffect(MobEffects.BLINDNESS);
                 this.giveSeekerItems(player);
 
-                AttributeModifier attributeModifier = new AttributeModifier(BlockHider.id("seeker_advantage"), 0.1d, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
+                AttributeModifier attributeModifier = new AttributeModifier(BlockHider.id("seeker_advantage"), 0.2d, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
                 AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (attributeInstance != null) {
                     attributeInstance.addOrUpdateTransientModifier(attributeModifier);
                 }
+
+                player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, MobEffectInstance.INFINITE_DURATION, 0, false, false, false));
             }
 
             player.heal(player.getMaxHealth());
@@ -194,16 +196,19 @@ public class GameTimer {
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_SWORD));
         inventory.setSelectedSlot(0);
+        inventory.setChanged();
 
         player.setItemSlot(EquipmentSlot.CHEST, new ItemStack(Items.DIAMOND_CHESTPLATE));
+        inventory.setChanged();
 
         if (ModConfig.getHintItemCount() != 0) {
             inventory.setItem(8, new ItemStack(ModItems.HINT_ITEM));
+            inventory.setChanged();
         }
 
-        inventory.setChanged();
-
         this.giveItems(player, ModConfig.getSeekerItems());
+
+        player.connection.send(new ClientboundSetHeldSlotPacket(0));
     }
 
     private void giveItems(ServerPlayer player, List<ModConfig.ItemEntry> items) {
@@ -214,6 +219,7 @@ public class GameTimer {
             if (stack.isEmpty()) { continue; }
 
             inventory.add(stack);
+            inventory.setChanged();
         }
     }
 
@@ -222,12 +228,14 @@ public class GameTimer {
 
         inventory.setItem(0, new ItemStack(Items.DIAMOND_PICKAXE));
         inventory.setSelectedSlot(0);
+        inventory.setChanged();
 
         inventory.setItem(1, new ItemStack(Items.SNOWBALL, GameManager.snowballCount));
-
         inventory.setChanged();
 
         this.giveItems(player, ModConfig.getHiderItems());
+
+        player.connection.send(new ClientboundSetHeldSlotPacket(0));
     }
 
     private void applyInitialPhase(MinecraftServer server) {

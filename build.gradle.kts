@@ -11,6 +11,8 @@ object BuildConfig {
     var MOD_VERSION: String = "0.1.0"
 
     var CONFIG_VERSION: String = "3.7.3"
+
+    var DISPLAYNAME_VERSION: String = "0.1.0-26.1.2"
 }
 
 plugins {
@@ -27,6 +29,7 @@ version = createVersionString()
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
@@ -42,6 +45,8 @@ dependencies {
     include("com.electronwill.night-config:toml:${BuildConfig.CONFIG_VERSION}")
     implementation("com.electronwill.night-config:core:${BuildConfig.CONFIG_VERSION}")
     include("com.electronwill.night-config:core:${BuildConfig.CONFIG_VERSION}")
+
+    implementation("com.github.Pyke-Lee:displayname:${BuildConfig.DISPLAYNAME_VERSION}")
 }
 
 tasks {

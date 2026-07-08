@@ -5,6 +5,7 @@ import kr.pyke.blockhider.game.GameData;
 import kr.pyke.blockhider.game.GameManager;
 import kr.pyke.blockhider.game.PlayerGameData;
 import kr.pyke.blockhider.network.payload.s2c.S2C_GameStatePayload;
+import kr.pyke.blockhider.network.payload.s2c.S2C_SeekerListPayload;
 import kr.pyke.blockhider.network.payload.s2c.S2C_TransformPayload;
 import kr.pyke.blockhider.network.payload.s2c.S2C_TransformSyncPayload;
 import kr.pyke.blockhider.transform.PlayerTransform;
@@ -31,6 +32,7 @@ public class ModPackets {
         PayloadTypeRegistry.clientboundPlay().register(S2C_TransformPayload.ID, S2C_TransformPayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2C_TransformSyncPayload.ID, S2C_TransformSyncPayload.STREAM_CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2C_GameStatePayload.ID, S2C_GameStatePayload.STREAM_CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(S2C_SeekerListPayload.ID, S2C_SeekerListPayload.STREAM_CODEC);
     }
 
     public static void registerServer() {
@@ -44,6 +46,8 @@ public class ModPackets {
         ClientPlayNetworking.registerGlobalReceiver(S2C_TransformSyncPayload.ID, S2C_TransformSyncPayload::handle);
         // S2C_GameStatePayload
         ClientPlayNetworking.registerGlobalReceiver(S2C_GameStatePayload.ID, S2C_GameStatePayload::handle);
+        // S2C_GameStatePayload
+        ClientPlayNetworking.registerGlobalReceiver(S2C_SeekerListPayload.ID, S2C_SeekerListPayload::handle);
     }
 
     public static void broadcastTransform(MinecraftServer server, UUID playerUuid, BlockState block, BlockPos pos) {

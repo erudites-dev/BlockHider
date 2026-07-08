@@ -10,6 +10,7 @@ import kr.pyke.blockhider.data.BlockHiderSavedData;
 import kr.pyke.blockhider.game.GameManager;
 import kr.pyke.blockhider.transform.HitboxOwner;
 import kr.pyke.blockhider.type.GAME_ROLE;
+import kr.pyke.displayname.data.DisplayNameData;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -222,7 +223,7 @@ public class BlockHiderCommand {
         }
 
         String message = builder.toString();
-        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r " + message), false);
+        source.sendSuccess(() -> Component.literal(message), false);
         return 1;
     }
 
@@ -259,8 +260,15 @@ public class BlockHiderCommand {
 
             ServerPlayer target = server.getPlayerList().getPlayerByName(trimmed);
             if (target == null) {
-                notFound.add(trimmed);
-                continue;
+                String targetName = DisplayNameData.getServerState(server).getRealName(trimmed);
+                target = server.getPlayerList().getPlayerByName(targetName);
+
+                if (target == null) {
+                    notFound.add(trimmed);
+                    continue;
+                }
+
+                seekerUUIDs.add(target.getUUID());
             }
 
             seekerUUIDs.add(target.getUUID());

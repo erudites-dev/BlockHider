@@ -18,7 +18,7 @@ public abstract class SnowballMixin {
         if (target instanceof Player player) {
             Snowball snowball = (Snowball) (Object) this;
             if (player.level() instanceof ServerLevel serverLevel) {
-                player.hurtServer(serverLevel, snowball.damageSources().thrown(snowball, snowball.getOwner()), 0.1f);
+                player.hurtServer(serverLevel, snowball.damageSources().thrown(snowball, snowball.getOwner()), 0.5f);
             }
 
             ci.cancel();

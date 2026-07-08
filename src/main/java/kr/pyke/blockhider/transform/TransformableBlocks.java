@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -20,6 +21,7 @@ public class TransformableBlocks {
     public static boolean isTransformable(BlockGetter level, BlockPos pos, BlockState state) {
         if (state.isAir()) { return false; }
         if (state.is(ModBlocks.GHOST_BLOCK)) { return false; }
+        if (state.is(Blocks.BARRIER)) { return false; }
         if (state.isCollisionShapeFullBlock(level, pos)) { return true; }
         if (state.hasBlockEntity()) { return true; }
         if (state.getBlock() instanceof IronBarsBlock) { return true; }
