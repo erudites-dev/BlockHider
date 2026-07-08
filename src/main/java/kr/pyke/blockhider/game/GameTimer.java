@@ -230,7 +230,7 @@ public class GameTimer {
         inventory.setSelectedSlot(0);
         inventory.setChanged();
 
-        inventory.setItem(1, new ItemStack(Items.SNOWBALL, GameManager.snowballCount));
+        inventory.setItem(1, new ItemStack(Items.SNOWBALL, ModConfig.getSnowballCount()));
         inventory.setChanged();
 
         this.giveItems(player, ModConfig.getHiderItems());

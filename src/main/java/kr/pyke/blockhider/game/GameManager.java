@@ -36,8 +36,6 @@ public class GameManager {
     private final GameTimer timer = new GameTimer(this);
     private final Random random = new Random();
 
-    public static int snowballCount = 99;
-
     private GameManager() { }
 
     public static GameManager getInstance() { return INSTANCE; }
@@ -305,6 +303,7 @@ public class GameManager {
     }
 
     private void eliminate(ServerPlayer player, PlayerGameData playerGameData, DamageSource damageSource) {
+        GAME_ROLE originalRole = playerGameData.getRole();
         playerGameData.setAlive(false);
         playerGameData.setRole(GAME_ROLE.SPECTATOR);
 
@@ -324,14 +323,16 @@ public class GameManager {
         player.getInventory().clearContent();
 
         if (damageSource.getEntity() instanceof ServerPlayer reason) {
-
             PlayerGameData reasonGameData = GameManager.getInstance().getData().getPlayerData(reason.getUUID());
             if (reasonGameData != null) {
-                if (reasonGameData.getRole() == GAME_ROLE.SEEKER) {
+                if (reasonGameData.getRole() == originalRole) {
                     server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님의 팀킬로 §7%s§r님이 탈락하였습니다.", reason.getDisplayName().getString(), player.getDisplayName().getString())), false);
                 }
-                else if (reasonGameData.getRole() == GAME_ROLE.HIDER) {
+                else if (originalRole == GAME_ROLE.HIDER) {
                     server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r 술래가 §7%s§r님을 탈락시켰습니다.", player.getDisplayName().getString())), false);
+                }
+                else {
+                    server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 술래 §7%s§r님을 탈락시켰습니다.", reason.getDisplayName().getString(), player.getDisplayName().getString())), false);
                 }
             }
         }
@@ -342,7 +343,7 @@ public class GameManager {
         ModPackets.broadcastGameState(player.level().getServer());
     }
 
-    private void checkVictory(MinecraftServer server) {
+    public void checkVictory(MinecraftServer server) {
         if (data.isDebugMode()) { return; }
 
         boolean anyHider = false;

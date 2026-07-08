@@ -2,6 +2,8 @@ package kr.pyke.blockhider.mixin.server;
 
 import kr.pyke.blockhider.transform.HitboxOwner;
 import kr.pyke.blockhider.transform.PlayerTransform;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -22,6 +24,7 @@ public class InteractionMixin implements HitboxOwner {
 
     @Override public Player blockhider$getOwner() { return this.blockhider$owner; }
 
+    @Environment(EnvType.CLIENT)
     @Inject(method = "isPickable", at = @At("HEAD"), cancellable = true)
     private void blockhider$ignoreOwnHitbox(CallbackInfoReturnable<Boolean> cir) {
         Interaction self = (Interaction) (Object) this;

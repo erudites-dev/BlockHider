@@ -1,6 +1,7 @@
 package kr.pyke.blockhider.handler;
 
 import kr.pyke.blockhider.game.GameManager;
+import kr.pyke.blockhider.game.PlayerGameData;
 import kr.pyke.blockhider.network.ModPackets;
 import kr.pyke.blockhider.network.payload.s2c.S2C_SeekerListPayload;
 import kr.pyke.blockhider.transform.PlayerTransform;
@@ -8,6 +9,7 @@ import kr.pyke.blockhider.type.GAME_ROLE;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -30,17 +32,34 @@ public class ServerPlayConnectionHandler {
             ServerPlayer player = handler.getPlayer();
             PlayerTransform transform = (PlayerTransform) player;
             BlockPos currentPos = transform.blockhider$getTransformedPos();
-            if (currentPos == null) { return; }
 
-            ServerLevel level = player.level();
-            BlockPos visualPos = currentPos.above();
-            BlockState restored = level.getBlockState(visualPos);
-            ClientboundBlockUpdatePacket packet = new ClientboundBlockUpdatePacket(visualPos, restored);
-            for (ServerPlayer other : server.getPlayerList().getPlayers()) {
-                if (other.getUUID().equals(player.getUUID())) { continue; }
+            if (currentPos != null) {
+                ServerLevel level = player.level();
+                BlockPos visualPos = currentPos.above();
+                BlockState restored = level.getBlockState(visualPos);
+                ClientboundBlockUpdatePacket packet = new ClientboundBlockUpdatePacket(visualPos, restored);
+                for (ServerPlayer other : server.getPlayerList().getPlayers()) {
+                    if (other.getUUID().equals(player.getUUID())) { continue; }
 
-                other.connection.send(packet);
+                    other.connection.send(packet);
+                }
+
+                transform.blockhider$setTransformedBlock(null, null);
             }
+
+            GameManager gameManager = GameManager.getInstance();
+            if (!gameManager.isRunning()) { return; }
+
+            PlayerGameData playerGameData = gameManager.getData().getPlayerData(player.getUUID());
+            if (playerGameData == null || !playerGameData.isAlive()) { return; }
+
+            playerGameData.setAlive(false);
+            playerGameData.setRole(GAME_ROLE.SPECTATOR);
+
+            server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 접속 종료로 탈락하였습니다.", player.getDisplayName().getString())), false);
+
+            ModPackets.broadcastGameState(server);
+            gameManager.checkVictory(server);
         });
     }
 

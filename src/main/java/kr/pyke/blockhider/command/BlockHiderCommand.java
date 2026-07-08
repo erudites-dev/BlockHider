@@ -142,7 +142,8 @@ public class BlockHiderCommand {
 
     private static int setSnowballCount(CommandContext<CommandSourceStack> context) {
         int value = IntegerArgumentType.getInteger(context, "count");
-        GameManager.snowballCount = value;
+        ModConfig.setSnowballCount(value);
+        ModConfig.save();
 
         context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 눈덩이 개수가 " + value + "개로 설정되었습니다."), true);
         return 1;

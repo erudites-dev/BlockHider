@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public record S2C_TransformSyncPayload(Map<UUID, TransformEntry> entries) implements CustomPacketPayload {
@@ -39,8 +40,11 @@ public record S2C_TransformSyncPayload(Map<UUID, TransformEntry> entries) implem
             var level = context.client().level;
             if (level == null) { return; }
 
+            Set<UUID> syncedUUIDs = payload.entries.keySet();
             for (Player player : level.players()) {
-                ((PlayerTransform)player).blockhider$setTransformedBlock(null, null);
+                if (!syncedUUIDs.contains(player.getUUID())) {
+                    ((PlayerTransform)player).blockhider$setTransformedBlock(null, null);
+                }
             }
             for (Map.Entry<UUID, TransformEntry> entry : payload.entries.entrySet()) {
                 Player player = level.getPlayerByUUID(entry.getKey());
