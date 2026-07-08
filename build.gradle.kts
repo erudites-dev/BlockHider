@@ -8,7 +8,7 @@ object BuildConfig {
     val FABRIC_API_VERSION: String = "0.147.0+26.1.2"
 
     // https://semver.org/
-    var MOD_VERSION: String = "0.1.0"
+    var MOD_VERSION: String = "0.1.7"
 
     var CONFIG_VERSION: String = "3.7.3"
 
@@ -88,26 +88,9 @@ tasks.test {
 fun createVersionString(): String {
     val builder = StringBuilder()
 
-    val isReleaseBuild = project.hasProperty("build.release")
-    val buildId = System.getenv("GITHUB_RUN_NUMBER")
-
-    if (isReleaseBuild) {
-        builder.append(BuildConfig.MOD_VERSION)
-    } else {
-        builder.append(BuildConfig.MOD_VERSION.substringBefore('-'))
-        builder.append("-snapshot")
-    }
+    builder.append(BuildConfig.MOD_VERSION)
 
     builder.append("+mc").append(BuildConfig.MINECRAFT_VERSION)
-
-    if (!isReleaseBuild) {
-        if (buildId != null) {
-            builder.append("-build.${buildId}")
-        }
-        else {
-            builder.append("-local")
-        }
-    }
 
     return builder.toString()
 }

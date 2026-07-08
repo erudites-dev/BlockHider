@@ -177,7 +177,7 @@ public class GameTimer {
                 AttributeModifier attributeModifier = new AttributeModifier(BlockHider.id("seeker_advantage"), 0.2d, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
                 AttributeInstance attributeInstance = player.getAttribute(Attributes.MOVEMENT_SPEED);
                 if (attributeInstance != null) {
-                    attributeInstance.addOrUpdateTransientModifier(attributeModifier);
+                    attributeInstance.addOrReplacePermanentModifier(attributeModifier);
                 }
 
                 player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, MobEffectInstance.INFINITE_DURATION, 0, false, false, false));

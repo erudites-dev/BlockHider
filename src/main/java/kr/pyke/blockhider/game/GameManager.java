@@ -81,7 +81,6 @@ public class GameManager {
         for (PlayerGameData playerGameData : data.getPlayers()) {
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
-            if (playerGameData.getRole() == GAME_ROLE.SEEKER) { continue; }
 
             if (playerGameData.isAlive()) {
                 if (alive.isEmpty()) { alive.append(player.getDisplayName().getString()); }
