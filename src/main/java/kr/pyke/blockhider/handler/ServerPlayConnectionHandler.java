@@ -45,6 +45,7 @@ public class ServerPlayConnectionHandler {
                 }
 
                 transform.blockhider$setTransformedBlock(null, null);
+                ModPackets.broadcastTransform(server, player.getUUID(), null, null);
             }
         });
     }

@@ -375,6 +375,16 @@ public class GameManager {
             return;
         }
 
+        for (PlayerGameData playerGameData : data.getPlayers()) {
+            if (!playerGameData.isAlive()) { continue; }
+
+            ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
+            if (player != null) { continue; }
+
+            playerGameData.setAlive(false);
+            playerGameData.setRole(GAME_ROLE.SPECTATOR);
+        }
+
         boolean anyHider = false;
         for (PlayerGameData playerGameData : data.getPlayers()) {
             if (!playerGameData.isAlive()) { continue; }
