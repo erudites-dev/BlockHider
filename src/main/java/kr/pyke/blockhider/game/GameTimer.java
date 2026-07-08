@@ -10,6 +10,9 @@ import kr.pyke.blockhider.type.GAME_ROLE;
 import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.protocol.game.*;
@@ -243,8 +246,8 @@ public class GameTimer {
 
         ModConfig.BuffPhase active = null;
         for (ModConfig.BuffPhase phase : ModConfig.getBuffPhases()) {
-            if (phase.remainingTimeSeconds() > this.remainingSeconds) { continue; }
-            if (active != null && phase.remainingTimeSeconds() <= active.remainingTimeSeconds()) { continue; }
+            if (phase.remainingTimeSeconds() < this.remainingSeconds) { continue; }
+            if (active != null && phase.remainingTimeSeconds() >= active.remainingTimeSeconds()) { continue; }
 
             active = phase;
         }
@@ -271,8 +274,15 @@ public class GameTimer {
 
             for (String spec : phase.effects()) {
                 MobEffectInstance instance = ConfigParsers.toInfiniteEffect(spec, DEFAULT_BUFF_AMPLIFIER);
-                if (instance != null) { player.addEffect(instance); }
+                if (instance != null) {
+                    player.addEffect(instance);
+                }
             }
+
+            player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.WITHER_SPAWN), SoundSource.PLAYERS, player.getX(), player.getY(), player.getZ(), 0.5f, 1.f, player.getRandom().nextLong()));
+        }
+        if (!phase.message().isEmpty()) {
+            server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r " + phase.message()), false);
         }
     }
 
@@ -286,7 +296,7 @@ public class GameTimer {
         for (int alertSecond : PREPARING_ALERT_SECONDS) {
             if (alertSecond != seconds) { continue; }
 
-            broadcastMessage(server, Component.literal(seconds + "초 후 술래가 소환됩니다"));
+            broadcastMessage(server, Component.literal("§6[SYSTEM]§r " + seconds + "초 후 술래가 소환됩니다"));
             return;
         }
     }

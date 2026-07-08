@@ -46,20 +46,6 @@ public class ServerPlayConnectionHandler {
 
                 transform.blockhider$setTransformedBlock(null, null);
             }
-
-            GameManager gameManager = GameManager.getInstance();
-            if (!gameManager.isRunning()) { return; }
-
-            PlayerGameData playerGameData = gameManager.getData().getPlayerData(player.getUUID());
-            if (playerGameData == null || !playerGameData.isAlive()) { return; }
-
-            playerGameData.setAlive(false);
-            playerGameData.setRole(GAME_ROLE.SPECTATOR);
-
-            server.getPlayerList().broadcastSystemMessage(Component.literal(String.format("§6[SYSTEM]§r §7%s§r님이 접속 종료로 탈락하였습니다.", player.getDisplayName().getString())), false);
-
-            ModPackets.broadcastGameState(server);
-            gameManager.checkVictory(server);
         });
     }
 

@@ -149,7 +149,8 @@ public class ModConfig {
             JsonObject entry = element.getAsJsonObject();
             int remaining = getInt(entry, "remaining_time_seconds", 0);
             List<String> effects = readStringArray(entry, "effects");
-            result.add(new BuffPhase(remaining, effects));
+            String message = getString(entry, "message", "");
+            result.add(new BuffPhase(remaining, effects, message));
         }
         return result;
     }
@@ -192,6 +193,8 @@ public class ModConfig {
             for (String effect : phase.effects()) { effects.add(effect); }
             obj.add("effects", effects);
 
+            obj.addProperty("message", phase.message());
+
             array.add(obj);
         }
         return array;
@@ -217,5 +220,5 @@ public class ModConfig {
 
 
     public record ItemEntry(String itemID, int amount, List<String> enchantments, String components) { }
-    public record BuffPhase(int remainingTimeSeconds, List<String> effects) { }
+    public record BuffPhase(int remainingTimeSeconds, List<String> effects, String message) { }
 }

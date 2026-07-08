@@ -1,6 +1,10 @@
 package kr.pyke.blockhider.registry.block.ghost;
 
 import com.mojang.serialization.MapCodec;
+import kr.pyke.blockhider.game.GameManager;
+import kr.pyke.blockhider.game.PlayerGameData;
+import kr.pyke.blockhider.type.GAME_ROLE;
+import kr.pyke.blockhider.type.GAME_STATE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
@@ -51,8 +55,19 @@ public class GhostBlock extends HorizontalDirectionalBlock {
 
     @Override
     public @NotNull VoxelShape getCollisionShape(@NotNull BlockState state, @NotNull BlockGetter world, @NotNull BlockPos pos, @NotNull CollisionContext context) {
-        boolean isPlayer = context instanceof EntityCollisionContext && ((EntityCollisionContext)context).getEntity() instanceof Player;
+        if (!(context instanceof EntityCollisionContext entityContext)) { return this.getShape(state, world, pos, context); }
+        if (!(entityContext.getEntity() instanceof Player player)) { return this.getShape(state, world, pos, context); }
 
-        return isPlayer ? Shapes.empty() : this.getShape(state, world, pos, context);
+        if (!player.level().isClientSide()) {
+            GameManager gameManager = GameManager.getInstance();
+            if (gameManager.getData().getState() == GAME_STATE.PREPARING) {
+                PlayerGameData playerGameData = gameManager.getData().getPlayerData(player.getUUID());
+                if (playerGameData != null && playerGameData.getRole() == GAME_ROLE.SEEKER) {
+                    return this.getShape(state, world, pos, context);
+                }
+            }
+        }
+
+        return Shapes.empty();
     }
 }
