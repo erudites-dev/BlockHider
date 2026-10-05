@@ -1,6 +1,7 @@
 package kr.pyke.blockhider;
 
 import kr.pyke.blockhider.command.BlockHiderCommand;
+import kr.pyke.blockhider.command.ScoreCommand;
 import kr.pyke.blockhider.config.ModConfig;
 import kr.pyke.blockhider.handler.*;
 import kr.pyke.blockhider.network.ModPackets;
@@ -41,6 +42,7 @@ public class BlockHider implements ModInitializer {
         ServerLivingEntityHandler.register();
 
         CommandRegistrationCallback.EVENT.register(BlockHiderCommand::register);
+        CommandRegistrationCallback.EVENT.register(ScoreCommand::register);
     }
 
     public static Identifier id(String path) {
