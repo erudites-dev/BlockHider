@@ -3,6 +3,7 @@ package kr.pyke.blockhider.data;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import kr.pyke.blockhider.BlockHider;
+import kr.pyke.blockhider.config.ModConfig;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -22,6 +23,7 @@ public class BlockHiderSavedData extends SavedData {
     private static final float DEFAULT_ROTATION = 0.f;
 
     private final List<UUID> admins;
+    private final Map<UUID, Integer> buffGrades;
     private ResourceKey<Level> spawnDim;
     private Vec3 spawnPos;
     private float spawnYaw;
@@ -32,19 +34,22 @@ public class BlockHiderSavedData extends SavedData {
         Level.RESOURCE_KEY_CODEC.optionalFieldOf("spawn_dimension").forGetter(data -> Optional.ofNullable(data.spawnDim)),
         Vec3.CODEC.optionalFieldOf("spawn_position").forGetter(data -> Optional.ofNullable(data.spawnPos)),
         Codec.FLOAT.optionalFieldOf("spawn_yaw", DEFAULT_ROTATION).forGetter(data -> data.spawnYaw),
-        Codec.FLOAT.optionalFieldOf("spawn_pitch", DEFAULT_ROTATION).forGetter(data -> data.spawnPitch)
+        Codec.FLOAT.optionalFieldOf("spawn_pitch", DEFAULT_ROTATION).forGetter(data -> data.spawnPitch),
+        Codec.unboundedMap(UUIDUtil.STRING_CODEC, Codec.INT).optionalFieldOf("buff_grades", Map.of()).forGetter(data -> data.buffGrades)
     ).apply(instance, BlockHiderSavedData::new));
 
     public static final SavedDataType<BlockHiderSavedData> TYPE = new SavedDataType<>(FILE_NAME, BlockHiderSavedData::new, CODEC, DataFixTypes.SAVED_DATA_COMMAND_STORAGE);
 
     public BlockHiderSavedData() {
         this.admins = new ArrayList<>();
+        this.buffGrades = new HashMap<>();
         this.spawnYaw = DEFAULT_ROTATION;
         this.spawnPitch = DEFAULT_ROTATION;
     }
 
-    private BlockHiderSavedData(List<UUID> admins, Optional<ResourceKey<Level>> spawnDim, Optional<Vec3> spawnPos, float spawnYaw, float spawnPitch) {
+    private BlockHiderSavedData(List<UUID> admins, Optional<ResourceKey<Level>> spawnDim, Optional<Vec3> spawnPos, float spawnYaw, float spawnPitch, Map<UUID, Integer> buffGrades) {
         this.admins = new ArrayList<>(admins);
+        this.buffGrades = new HashMap<>(buffGrades);
         this.spawnDim = spawnDim.orElse(null);
         this.spawnPos = spawnPos.orElse(null);
         this.spawnYaw = spawnYaw;
@@ -71,6 +76,15 @@ public class BlockHiderSavedData extends SavedData {
         if (removed) { setDirty(); }
 
         return removed;
+    }
+
+    public int getBuffGrade(UUID uuid) { return buffGrades.getOrDefault(uuid, ModConfig.DEFAULT_BUFF_GRADE); }
+
+    public Map<UUID, Integer> getBuffGrades() { return Collections.unmodifiableMap(buffGrades); }
+
+    public void setBuffGrade(UUID uuid, int grade) {
+        buffGrades.put(uuid, grade);
+        setDirty();
     }
 
     public ResourceKey<Level> getSpawnDimension() { return spawnDim; }

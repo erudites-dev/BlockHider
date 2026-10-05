@@ -32,7 +32,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class GameTimer {
     private static final int TICKS_PER_SECOND = 20;
@@ -266,13 +268,19 @@ public class GameTimer {
     }
 
     private void applyPhaseToSeekers(MinecraftServer server, ModConfig.BuffPhase phase) {
+        BlockHiderSavedData savedData = BlockHiderSavedData.get(server);
+        Set<String> messages = new LinkedHashSet<>();
+
         for (PlayerGameData playerGameData : this.gameManager.getData().getPlayers()) {
             if (playerGameData.getRole() != GAME_ROLE.SEEKER || !playerGameData.isAlive()) { continue; }
 
             ServerPlayer player = server.getPlayerList().getPlayer(playerGameData.getUUID());
             if (player == null) { continue; }
 
-            for (String spec : phase.effects()) {
+            ModConfig.BuffGrade grade = phase.grades().get(savedData.getBuffGrade(player.getUUID()));
+            if (grade.effects().isEmpty() && grade.message().isEmpty()) { continue; }
+
+            for (String spec : grade.effects()) {
                 MobEffectInstance instance = ConfigParsers.toInfiniteEffect(spec, DEFAULT_BUFF_AMPLIFIER);
                 if (instance != null) {
                     player.addEffect(instance);
@@ -280,9 +288,11 @@ public class GameTimer {
             }
 
             player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.WITHER_SPAWN), SoundSource.PLAYERS, player.getX(), player.getY(), player.getZ(), 0.5f, 1.f, player.getRandom().nextLong()));
+            if (!grade.message().isEmpty()) { messages.add(grade.message()); }
         }
-        if (!phase.message().isEmpty()) {
-            server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r " + phase.message()), false);
+
+        for (String message : messages) {
+            server.getPlayerList().broadcastSystemMessage(Component.literal("§6[SYSTEM]§r " + message), false);
         }
     }
 

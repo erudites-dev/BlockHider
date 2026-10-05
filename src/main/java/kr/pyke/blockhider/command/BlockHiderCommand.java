@@ -62,6 +62,12 @@ public class BlockHiderCommand {
                     .then(Commands.argument("ticks", IntegerArgumentType.integer(MIN_COOLDOWN)).executes(BlockHiderCommand::setSnowballCooldown))
                 )
             )
+            .then(Commands.literal("버프등급")
+                .then(Commands.literal("목록").executes(BlockHiderCommand::listBuffGrades))
+                .then(Commands.argument("players", EntityArgument.players())
+                    .then(Commands.argument("grade", IntegerArgumentType.integer(ModConfig.MIN_BUFF_GRADE, ModConfig.MAX_BUFF_GRADE)).executes(BlockHiderCommand::setBuffGrade))
+                )
+            )
             .then(Commands.literal("스폰").executes(BlockHiderCommand::setSpawnHere))
             .then(Commands.literal("관리자")
                 .then(Commands.literal("추가")
@@ -155,6 +161,48 @@ public class BlockHiderCommand {
         ModConfig.save();
 
         context.getSource().sendSuccess(() -> Component.literal("§6[SYSTEM]§r 눈덩이 쿨타임이 " + (value / 20.f) + "초로 설정되었습니다."), true);
+        return 1;
+    }
+
+    private static int setBuffGrade(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        CommandSourceStack source = context.getSource();
+        Collection<ServerPlayer> targets = EntityArgument.getPlayers(context, "players");
+        int grade = IntegerArgumentType.getInteger(context, "grade");
+        BlockHiderSavedData savedData = BlockHiderSavedData.get(source.getServer());
+
+        List<String> names = new ArrayList<>();
+        for (ServerPlayer target : targets) {
+            savedData.setBuffGrade(target.getUUID(), grade);
+            names.add(target.getDisplayName().getString());
+        }
+
+        String joined = String.join(", ", names);
+        source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r " + joined + "의 버프 등급을 " + grade + "등급으로 설정했습니다."), true);
+        return targets.size();
+    }
+
+    private static int listBuffGrades(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        MinecraftServer server = source.getServer();
+        Map<UUID, Integer> grades = BlockHiderSavedData.get(server).getBuffGrades();
+
+        if (grades.isEmpty()) {
+            source.sendSuccess(() -> Component.literal("§6[SYSTEM]§r 버프 등급이 지정된 플레이어가 없습니다. (기본 " + ModConfig.DEFAULT_BUFF_GRADE + "등급)"), false);
+            return 0;
+        }
+
+        StringBuilder builder = new StringBuilder("§6[SYSTEM]§r 버프 등급 목록 (").append(grades.size()).append("명): ");
+        boolean first = true;
+        for (Map.Entry<UUID, Integer> entry : grades.entrySet()) {
+            ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
+            String name = player != null ? player.getDisplayName().getString() : entry.getKey().toString();
+            if (!first) { builder.append(", "); }
+            builder.append(name).append(" ").append(entry.getValue()).append("등급");
+            first = false;
+        }
+
+        String message = builder.toString();
+        source.sendSuccess(() -> Component.literal(message), false);
         return 1;
     }
 

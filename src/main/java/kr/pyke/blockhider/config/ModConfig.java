@@ -6,11 +6,13 @@ import net.fabricmc.loader.api.FabricLoader;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ModConfig {
+    public static final int MIN_BUFF_GRADE = 1;
+    public static final int MAX_BUFF_GRADE = 3;
+    public static final int DEFAULT_BUFF_GRADE = MIN_BUFF_GRADE;
+
     private static final String FILE_NAME = "blockhider.json";
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -148,11 +150,25 @@ public class ModConfig {
 
             JsonObject entry = element.getAsJsonObject();
             int remaining = getInt(entry, "remaining_time_seconds", 0);
-            List<String> effects = readStringArray(entry, "effects");
-            String message = getString(entry, "message", "");
-            result.add(new BuffPhase(remaining, effects, message));
+            result.add(new BuffPhase(remaining, readBuffGrades(entry)));
         }
         return result;
+    }
+
+    private static Map<Integer, BuffGrade> readBuffGrades(JsonObject phase) {
+        Map<Integer, BuffGrade> result = new TreeMap<>();
+        JsonObject grades = getObject(phase, "grades");
+        for (int grade = MIN_BUFF_GRADE; grade <= MAX_BUFF_GRADE; grade++) {
+            result.put(grade, readBuffGrade(getObject(grades, String.valueOf(grade))));
+        }
+
+        // 등급 도입 이전 config의 effects, message는 기본 등급으로 이전
+        if (!phase.has("grades")) { result.put(DEFAULT_BUFF_GRADE, readBuffGrade(phase)); }
+        return result;
+    }
+
+    private static BuffGrade readBuffGrade(JsonObject obj) {
+        return new BuffGrade(readStringArray(obj, "effects"), getString(obj, "message", ""));
     }
 
     private static List<String> readStringArray(JsonObject obj, String key) {
@@ -189,15 +205,27 @@ public class ModConfig {
             JsonObject obj = new JsonObject();
             obj.addProperty("remaining_time_seconds", phase.remainingTimeSeconds());
 
-            JsonArray effects = new JsonArray();
-            for (String effect : phase.effects()) { effects.add(effect); }
-            obj.add("effects", effects);
-
-            obj.addProperty("message", phase.message());
+            JsonObject grades = new JsonObject();
+            for (Map.Entry<Integer, BuffGrade> entry : phase.grades().entrySet()) {
+                grades.add(String.valueOf(entry.getKey()), writeBuffGrade(entry.getValue()));
+            }
+            obj.add("grades", grades);
 
             array.add(obj);
         }
         return array;
+    }
+
+    private static JsonObject writeBuffGrade(BuffGrade grade) {
+        JsonObject obj = new JsonObject();
+
+        JsonArray effects = new JsonArray();
+        for (String effect : grade.effects()) { effects.add(effect); }
+        obj.add("effects", effects);
+
+        obj.addProperty("message", grade.message());
+
+        return obj;
     }
 
     public static int getSeekerCount() { return seekerCount; }
@@ -220,5 +248,6 @@ public class ModConfig {
 
 
     public record ItemEntry(String itemID, int amount, List<String> enchantments, String components) { }
-    public record BuffPhase(int remainingTimeSeconds, List<String> effects, String message) { }
+    public record BuffPhase(int remainingTimeSeconds, Map<Integer, BuffGrade> grades) { }
+    public record BuffGrade(List<String> effects, String message) { }
 }
